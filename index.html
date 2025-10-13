@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Outfit Planner</title>
+
+    <!-- Meta tags for native app-like experience on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta id="theme-color-meta" name="theme-color" content="#F9FAFB">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    
+    <!-- Google Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    
+    <!-- Tailwind CSS Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#6366F1", // Indigo 500
+                        "background-light": "#F9FAFB", // Gray 50
+                        "background-dark": "#111827", // Gray 900
+                        "card-light": "#FFFFFF", // White
+                        "card-dark": "#1F2937", // Gray 800
+                        "text-light": "#111827", // Gray 900
+                        "text-dark": "#F9FAFB", // Gray 50
+                        "text-secondary-light": "#6B7280", // Gray 500
+                        "text-secondary-dark": "#9CA3AF", // Gray 400
+                        "border-light": "#E5E7EB", // Gray 200
+                        "border-dark": "#374151", // Gray 700
+                        "input-light": "#F3F4F6",
+                        "input-dark": "#374151",
+                    },
+                    fontFamily: {
+                        display: ["Poppins", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.75rem", // 12px
+                    },
+                },
+            },
+        };
+    </script>
+
+    <!-- Custom Styles -->
+    <style>
+        .material-icons, .material-symbols-outlined {
+            font-size: 24px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display">
+
+    <div class="flex">
+        <!-- ===== Desktop Sidebar Navigation ===== -->
+        <nav class="hidden md:flex flex-col items-center w-20 bg-card-light dark:bg-card-dark border-r border-border-light dark:border-border-dark py-4 fixed h-full z-30">
+            <div class="mb-8">
+                 <span class="material-symbols-outlined text-primary text-4xl">styler</span>
+            </div>
+            <div class="flex flex-col items-center space-y-6">
+                <button onclick="showPage('page-closet')" data-page="page-closet" class="nav-link flex flex-col items-center justify-center">
+                    <span class="material-icons">checkroom</span><span class="text-xs font-medium mt-1">Closet</span>
+                </button>
+                <button onclick="showPage('page-planner')" data-page="page-planner" class="nav-link flex flex-col items-center justify-center">
+                    <span class="material-icons">grid_view</span><span class="text-xs mt-1">Planner</span>
+                </button>
+                <button onclick="showPage('page-try-on')" data-page="page-try-on" class="nav-link flex flex-col items-center justify-center">
+                    <span class="material-symbols-outlined">accessibility</span><span class="text-xs mt-1">Try-On</span>
+                </button>
+                <button onclick="showPage('page-inspiration')" data-page="page-inspiration" class="nav-link flex flex-col items-center justify-center">
+                    <span class="material-icons">lightbulb</span><span class="text-xs mt-1">Inspiration</span>
+                </button>
+                <button onclick="showPage('page-profile')" data-page="page-profile" class="nav-link flex flex-col items-center justify-center">
+                    <span class="material-icons">person</span><span class="text-xs mt-1">Profile</span>
+                </button>
+            </div>
+        </nav>
+
+        <div id="app-container" class="w-full flex-grow md:ml-20">
+            <div class="max-w-5xl mx-auto">
+
+                <!-- ===== Page 1: My Closet ===== -->
+                <div id="page-closet" class="page-content flex flex-col flex-grow min-h-screen">
+                    <header class="sticky top-0 bg-background-light dark:bg-background-dark z-10 shadow-sm">
+                        <div class="px-4 md:px-8 py-4">
+                            <h1 class="text-xl font-bold text-center text-text-light dark:text-text-dark">My Closet</h1>
+                        </div>
+                    </header>
+                    <main class="flex-grow w-full px-4 md:px-8 pt-4 pb-24">
+                        <div id="closet-filter-buttons" class="flex items-center space-x-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+                            <button onclick="filterCloset('all')" class="filter-btn px-4 py-2 text-sm font-semibold rounded-full bg-primary text-white flex-shrink-0">All</button>
+                            <button onclick="filterCloset('top')" class="filter-btn px-4 py-2 text-sm font-semibold rounded-full bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark flex-shrink-0">Tops</button>
+                            <button onclick="filterCloset('bottom')" class="filter-btn px-4 py-2 text-sm font-semibold rounded-full bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark flex-shrink-0">Bottoms</button>
+                            <button onclick="filterCloset('shoe')" class="filter-btn px-4 py-2 text-sm font-semibold rounded-full bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark flex-shrink-0">Shoes</button>
+                            <div class="flex-grow"></div>
+                            <button onclick="showPage('page-add-item')" class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-primary text-white">
+                                <span class="material-icons !text-lg">add</span>
+                            </button>
+                        </div>
+                        <div id="closet-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            <div data-category="top" class="clothing-item bg-card-light dark:bg-card-dark rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-text-light dark:text-text-dark">White Tee</p></div>
+                            <div data-category="bottom" class="clothing-item bg-blue-300 dark:bg-blue-800 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-white dark:text-blue-100">Blue Jeans</p></div>
+                            <div data-category="shoe" class="clothing-item bg-yellow-200 dark:bg-yellow-800 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-yellow-800 dark:text-yellow-100">White Shoes</p></div>
+                            <div data-category="top" class="clothing-item bg-green-300 dark:bg-green-800 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-green-800 dark:text-green-100">Green Shirt</p></div>
+                            <div data-category="top" class="clothing-item bg-blue-400 dark:bg-blue-700 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-white dark:text-blue-100">Blue Sweater</p></div>
+                            <div data-category="bottom" class="clothing-item bg-gray-800 dark:bg-gray-900 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-white">Black Pants</p></div>
+                            <div data-category="shoe" class="clothing-item bg-gray-500 dark:bg-gray-600 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-white">Brown Boots</p></div>
+                            <div data-category="bottom" class="clothing-item bg-orange-300 dark:bg-orange-700 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-orange-800 dark:text-orange-100">Orange Skirt</p></div>
+                            <div data-category="top" class="clothing-item bg-pink-200 dark:bg-pink-800 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-pink-800 dark:text-pink-100">Pink Blouse</p></div>
+                        </div>
+                    </main>
+                </div>
+
+                <!-- ===== Page 2: Planner ===== -->
+                <div id="page-planner" class="page-content hidden flex-col flex-grow min-h-screen">
+                    <header class="sticky top-0 bg-background-light dark:bg-background-dark z-10 shadow-sm">
+                        <div class="px-4 md:px-8 py-4">
+                            <h1 class="text-xl font-bold text-center text-text-light dark:text-text-dark">Planner</h1>
+                        </div>
+                    </header>
+                    <main class="flex-grow w-full px-4 md:px-8 pt-4 pb-24">
+                        <div class="mb-6 text-center"><p class="text-text-light dark:text-text-dark">Select an item to get color recommendations.</p></div>
+                        <div class="md:grid md:grid-cols-2 md:gap-8">
+                            <div class="mb-8 md:mb-0">
+                                <h2 class="text-lg font-semibold text-text-light dark:text-text-dark mb-4">Selected Item</h2>
+                                <div class="bg-orange-300 dark:bg-orange-700 rounded-lg p-4 flex flex-col items-center justify-center shadow-lg aspect-[4/5] relative">
+                                    <div class="absolute top-2 right-2 bg-white/30 backdrop-blur-sm rounded-full p-1"><span class="material-icons text-orange-800 dark:text-orange-100 !text-lg">palette</span></div>
+                                    <p class="text-xl font-bold text-center text-orange-800 dark:text-orange-100">Orange Skirt</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-text-light dark:text-text-dark mb-4">Smart Color Suggestions</h2>
+                                <div class="space-y-6">
+                                    <div>
+                                        <div class="flex items-center mb-3"><div class="w-4 h-4 rounded-full bg-blue-400 mr-2 border border-gray-300 dark:border-gray-600"></div><h3 class="font-semibold text-text-light dark:text-text-dark">Complementary</h3></div>
+                                        <div class="grid grid-cols-3 gap-3"><div class="bg-blue-400 dark:bg-blue-700 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-white dark:text-blue-100">Blue Sweater</p></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center mb-3"><div class="w-4 h-4 rounded-full bg-pink-200 mr-2 border border-gray-300 dark:border-gray-600"></div><h3 class="font-semibold text-text-light dark:text-text-dark">Analogous</h3></div>
+                                        <div class="grid grid-cols-3 gap-3">
+                                            <div class="bg-pink-200 dark:bg-pink-800 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-pink-800 dark:text-pink-100">Pink Blouse</p></div>
+                                            <div class="bg-yellow-200 dark:bg-yellow-800 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-yellow-800 dark:text-yellow-100">Yellow Tee</p></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center mb-3"><div class="w-4 h-4 rounded-full bg-gray-200 mr-2 border border-gray-400 dark:border-gray-600"></div><h3 class="font-semibold text-text-light dark:text-text-dark">Neutrals</h3></div>
+                                        <div class="grid grid-cols-3 gap-3">
+                                            <div class="bg-card-light dark:bg-card-dark rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-text-light dark:text-text-dark">White Tee</p></div>
+                                            <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-white">Black Pants</p></div>
+                                            <div class="bg-gray-200 dark:bg-gray-500 rounded-lg p-2 aspect-square flex items-center justify-center shadow"><p class="text-sm font-medium text-center text-gray-800 dark:text-white">Beige Top</p></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+                
+                <!-- ===== Page 3: Virtual Try-On ===== -->
+                <div id="page-try-on" class="page-content hidden flex-col flex-grow min-h-screen">
+                    <header class="sticky top-0 bg-background-light dark:bg-background-dark z-20 shadow-sm">
+                        <div class="px-4 md:px-8 py-4 flex justify-between items-center">
+                            <h1 class="text-xl font-bold text-center text-text-light dark:text-text-dark flex-grow">Virtual Try-On</h1>
+                            <button class="p-2 rounded-full hover:bg-card-light dark:hover:bg-card-dark"><span class="material-icons text-text-light dark:text-text-dark">share</span></button>
+                        </div>
+                    </header>
+                    <main class="flex-grow w-full px-4 md:px-8 pt-4 pb-24">
+                        <div class="md:grid md:grid-cols-2 md:gap-8">
+                            <div class="relative rounded-lg aspect-[3/4] bg-card-dark mb-4 md:mb-0 overflow-hidden flex items-center justify-center">
+                                <img alt="Model wearing generated outfit" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIOuuK3imy2vlHcS1_k722fU-TAp4s1_1tVH951LM6JiFjQsHsiG4QrMWOyrycnqSF6UuHA9qG5YzvElsL5oPlgmF4ZhVS4M3f8jrR1tqZYYodIRsFtZpty4R6PoRBOntfekWjls-m6Ucm2XWrEV_5peclenC24wp9zLyU9u9rpSW6Y6L3CdMtPFefG4VsSN_B29i2nN0OoYcdS0-YXCr7AZN19sMO1wq9BnfUk_fBJpZBepmEGpDCENTtF-AkBaeJoDGj5mVRoh9R"/>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                                <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                                    <div class="flex items-center space-x-2"><button class="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1"><span class="material-symbols-outlined !text-sm">styler</span><span>AI Gen</span></button><button class="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1"><span class="material-symbols-outlined !text-sm">shuffle</span><span>Shuffle</span></button></div>
+                                    <div class="flex items-center space-x-2"><button class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center"><span class="material-symbols-outlined !text-lg">person</span></button><button class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center"><span class="material-symbols-outlined !text-lg">file_upload</span></button></div>
+                                </div>
+                            </div>
+                            <div class="space-y-6">
+                                <div>
+                                    <div class="flex items-center justify-between mb-3"><h2 class="text-lg font-semibold text-text-light dark:text-text-dark">Tops</h2><a class="text-sm font-medium text-primary" href="#">See All</a></div>
+                                    <div class="flex items-center space-x-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 no-scrollbar">
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow relative border-2 border-primary"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">White Tee</p><div class="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center"><span class="material-icons !text-xs text-white">check</span></div></div>
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">Green Shirt</p></div>
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">Blue Sweater</p></div>
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">Pink Blouse</p></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-3"><h2 class="text-lg font-semibold text-text-light dark:text-text-dark">Bottoms</h2><a class="text-sm font-medium text-primary" href="#">See All</a></div>
+                                    <div class="flex items-center space-x-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 no-scrollbar">
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow relative border-2 border-primary"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">Blue Jeans</p><div class="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center"><span class="material-icons !text-xs text-white">check</span></div></div>
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">Black Pants</p></div>
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">Orange Skirt</p></div>
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">Gray Shorts</p></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-3"><h2 class="text-lg font-semibold text-text-light dark:text-text-dark">Shoes</h2><a class="text-sm font-medium text-primary" href="#">See All</a></div>
+                                    <div class="flex items-center space-x-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 no-scrollbar">
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow relative border-2 border-primary"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">White Shoes</p><div class="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center"><span class="material-icons !text-xs text-white">check</span></div></div>
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">Brown Boots</p></div>
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">Black Heels</p></div>
+                                        <div class="w-24 h-32 flex-shrink-0 bg-card-light dark:bg-card-dark rounded-lg p-2 flex items-center justify-center shadow"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">Sneakers</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+
+                <!-- ===== Page 4: Inspiration ===== -->
+                <div id="page-inspiration" class="page-content hidden flex-col flex-grow min-h-screen">
+                    <header class="sticky top-0 bg-background-light dark:bg-background-dark z-10 shadow-sm">
+                        <div class="px-4 md:px-8 py-4"><h1 class="text-xl font-bold text-center text-text-light dark:text-text-dark">Inspiration</h1></div>
+                    </header>
+                    <main class="flex-grow w-full px-4 md:px-8 pt-6 pb-24">
+                        <div class="max-w-xl mx-auto bg-card-light dark:bg-card-dark rounded-lg p-6 shadow-md mb-8">
+                            <h2 class="text-lg font-semibold text-text-light dark:text-text-dark mb-4">Get Outfit Ideas</h2>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Upload a photo to find similar items from your closet and build an outfit.</p>
+                            <div class="border-2 border-dashed border-border-light dark:border-border-dark rounded-lg p-8 flex flex-col items-center justify-center text-center">
+                                <span class="material-symbols-outlined text-4xl text-gray-400 dark:text-gray-500 mb-2">cloud_upload</span>
+                                <p class="font-semibold text-text-light dark:text-text-dark">Upload Inspiration</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">PNG, JPG, GIF up to 10MB</p>
+                                <button class="mt-4 px-6 py-2 text-sm font-semibold rounded-full bg-primary text-white">Browse Files</button>
+                            </div>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-semibold text-text-light dark:text-text-dark mb-4">Your Inspired Looks</h2>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="bg-card-light dark:bg-card-dark rounded-lg shadow-md overflow-hidden">
+                                    <img alt="Woman in a stylish street outfit" class="w-full h-48 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdflLHNcWwMXL-4hOPiTtS5aavmaa7gfzA99hloN_p0NTankadS1gIcSlYsPrAFkVu9MdKknch-X4eVF1qnFWoH2Sn7nA7gFZvrQIrGAzaQ0ZjRyDaYg4QUD8DgDT1VHjNNOcciOUUBewFROXkDftxhAVBNyrd10taorsnJof0QTBVt6rzg7n9gMcJPSt17wH6yg6IWQgjnykXHNcspAAefKfxte9leOOQ1h2sdTTKTNQ0D3XRRNdklZ87FaFjWb2Tvq2tLXKzzdy7"/>
+                                    <div class="p-4">
+                                        <h3 class="font-semibold text-text-light dark:text-text-dark mb-2">Street Style Chic</h3>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Inspired by your uploaded photo.</p>
+                                        <div class="flex space-x-2">
+                                            <div class="w-1/3 aspect-square bg-white dark:bg-gray-700 rounded-lg p-1 flex items-center justify-center shadow-inner"><p class="text-xs font-medium text-center text-text-light dark:text-text-dark">White Tee</p></div>
+                                            <div class="w-1/3 aspect-square bg-blue-300 dark:bg-blue-800 rounded-lg p-1 flex items-center justify-center shadow-inner"><p class="text-xs font-medium text-center text-white dark:text-blue-100">Blue Jeans</p></div>
+                                            <div class="w-1/3 aspect-square bg-gray-800 dark:bg-gray-900 rounded-lg p-1 flex items-center justify-center shadow-inner"><p class="text-xs font-medium text-center text-white">Black Boots</p></div>
+                                        </div>
+                                        <button class="mt-4 w-full px-4 py-2 text-sm font-semibold rounded-full bg-primary/10 text-primary dark:bg-primary/20">View &amp; Try On</button>
+                                    </div>
+                                </div>
+                                <div class="bg-card-light dark:bg-card-dark rounded-lg shadow-md overflow-hidden">
+                                    <img alt="Woman in a casual summer dress" class="w-full h-48 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5xBps3FaXjBW-0AotbveBvbAPyCX8NONutblvf9M4Y1r98-YW2MdZL86cvg1bI3eJXCv8M8IiyEObkTmIruAuocv5VRdvfZx5ouqjssB4i4aFrOx-jqaVBAwM5guIohcV-GhGneF9HLps41oiyTRcehuRr7_z3cP1leVtzXzXnf66KQOBh9gM73Azv_Of15wKA0XxTj2ZePUkP6zreTO5MlbnNP_wzqE_kmTy6dyC7FOMrCosWnYs__DzXWeLrWrZLLOtyVxvevBv"/>
+                                    <div class="p-4">
+                                        <h3 class="font-semibold text-text-light dark:text-text-dark mb-2">Summer Casual</h3>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Inspired by your uploaded photo.</p>
+                                        <div class="flex space-x-2">
+                                            <div class="w-1/3 aspect-square bg-orange-300 dark:bg-orange-700 rounded-lg p-1 flex items-center justify-center shadow-inner"><p class="text-xs font-medium text-center text-orange-800 dark:text-orange-100">Orange Dress</p></div>
+                                            <div class="w-1/3 aspect-square bg-yellow-200 dark:bg-yellow-800 rounded-lg p-1 flex items-center justify-center shadow-inner"><p class="text-xs font-medium text-center text-yellow-800 dark:text-yellow-100">White Shoes</p></div>
+                                        </div>
+                                        <button class="mt-4 w-full px-4 py-2 text-sm font-semibold rounded-full bg-primary/10 text-primary dark:bg-primary/20">View &amp; Try On</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+
+                <!-- ===== Page 5: Profile ===== -->
+                <div id="page-profile" class="page-content hidden flex-col flex-grow min-h-screen">
+                    <header class="sticky top-0 bg-background-light dark:bg-background-dark z-10">
+                        <div class="px-4 md:px-8 py-4 flex justify-between items-center">
+                            <h1 class="text-xl font-bold text-center text-text-light dark:text-text-dark flex-grow">Profile</h1>
+                            <button class="text-text-light dark:text-text-dark"><span class="material-icons">more_horiz</span></button>
+                        </div>
+                    </header>
+                    <main class="flex-grow w-full px-4 md:px-8 pt-6 pb-24">
+                        <div class="max-w-2xl mx-auto">
+                            <div class="flex flex-col items-center mb-8">
+                                <div class="relative mb-4">
+                                    <img alt="User profile picture" class="w-24 h-24 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpApFXTCwbbmJOOSvLVNZh32l8sTojvUNrfQsZy6VmEcRdz_s-6QQ-hQeCi1R52b2D-fFR59YGJqDOxjZWIB5WqlE1Ikql_a9Vifq-YdlLkonz4WEEeNB76ipCSKWcGb-AzVLhcSc5gZSur8vYjd3pwxJIJ5-oPuo3Az1NA7AzTsCNEblIk9juhUnW3Jgh9GtKXpJyT8rTH5nM7QNf7xHCPOtZ6OjoFEgwx19LvrPXQMH7dOOEt-9NTx2x9O3cWfZqRDjdRS9MvpkU" />
+                                    <button class="absolute bottom-0 right-0 bg-primary text-white rounded-full w-7 h-7 flex items-center justify-center"><span class="material-icons !text-base">edit</span></button>
+                                </div>
+                                <h2 class="text-2xl font-bold text-text-light dark:text-text-dark">Jane Doe</h2>
+                                <p class="text-text-secondary-light dark:text-text-secondary-dark">@Jane.style</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-8 text-center">
+                                <div><p class="text-xl font-bold text-text-light dark:text-text-dark">152</p><p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">Items</p></div>
+                                <div><p class="text-xl font-bold text-text-light dark:text-text-dark">89</p><p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">Outfits</p></div>
+                            </div>
+                            <div class="space-y-6">
+                                <div class="bg-card-light dark:bg-card-dark rounded-lg p-4"><h3 class="font-semibold text-text-light dark:text-text-dark mb-4">Account</h3><div class="space-y-4"><a class="flex items-center justify-between text-text-light dark:text-text-dark" href="#"><div class="flex items-center"><span class="material-icons text-text-secondary-light dark:text-text-secondary-dark mr-4">person_outline</span><span>Edit Profile</span></div><span class="material-icons text-text-secondary-light dark:text-text-secondary-dark !text-lg">chevron_right</span></a><a class="flex items-center justify-between text-text-light dark:text-text-dark" href="#"><div class="flex items-center"><span class="material-icons text-text-secondary-light dark:text-text-secondary-dark mr-4">lock_outline</span><span>Change Password</span></div><span class="material-icons text-text-secondary-light dark:text-text-secondary-dark !text-lg">chevron_right</span></a></div></div>
+                                <div class="bg-card-light dark:bg-card-dark rounded-lg p-4"><h3 class="font-semibold text-text-light dark:text-text-dark mb-4">Preferences</h3><div class="space-y-4"><a class="flex items-center justify-between text-text-light dark:text-text-dark" href="#"><div class="flex items-center"><span class="material-icons text-text-secondary-light dark:text-text-secondary-dark mr-4">notifications_none</span><span>Notifications</span></div><span class="material-icons text-text-secondary-light dark:text-text-secondary-dark !text-lg">chevron_right</span></a><div class="flex items-center justify-between text-text-light dark:text-text-dark"><div class="flex items-center"><span class="material-icons text-text-secondary-light dark:text-text-secondary-dark mr-4">dark_mode</span><span>Dark Mode</span></div><label class="relative inline-flex items-center cursor-pointer"><input id="darkModeToggle" class="sr-only peer" type="checkbox" value="" /><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div></label></div></div></div>
+                                <div class="bg-card-light dark:bg-card-dark rounded-lg p-4"><a class="flex items-center justify-between text-red-500" href="#"><div class="flex items-center"><span class="material-icons mr-4">logout</span><span>Logout</span></div></a></div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+
+                <!-- ===== Page 6: Add New Item ===== -->
+                <div id="page-add-item" class="page-content hidden flex-col flex-grow min-h-screen">
+                     <header class="sticky top-0 bg-background-light dark:bg-background-dark z-10 shadow-sm">
+                        <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
+                            <button onclick="showPage('page-closet')" class="text-text-light dark:text-text-dark">
+                                <span class="material-icons">arrow_back_ios_new</span>
+                            </button>
+                            <h1 class="text-xl font-bold text-center text-text-light dark:text-text-dark">Add New Item</h1>
+                            <div class="w-8"></div>
+                        </div>
+                    </header>
+                    <main class="flex-grow max-w-md mx-auto w-full px-4 pt-6 pb-24 md:pb-8">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-2">Photo</label>
+                                <div class="aspect-square bg-card-light dark:bg-card-dark rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
+                                    <span class="material-icons text-gray-400 dark:text-gray-500 !text-4xl mb-2">add_a_photo</span>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Tap to upload a photo</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500">or take a new one</p>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-2" for="item-name">Item Name</label>
+                                <input class="w-full bg-input-light dark:bg-input-dark border-0 rounded-lg text-text-light dark:text-text-dark placeholder-gray-400 dark:placeholder-gray-500 focus:ring-primary focus:border-primary" id="item-name" placeholder="e.g., Comfy Blue Jeans" type="text"/>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-2" for="category">Category</label>
+                                <select class="w-full bg-input-light dark:bg-input-dark border-0 rounded-lg text-text-light dark:text-text-dark focus:ring-primary focus:border-primary" id="category">
+                                    <option>Select a category</option>
+                                    <option>Top</option>
+                                    <option>Bottom</option>
+                                    <option>Shoes</option>
+                                    <option>Accessory</option>
+                                    <option>Outerwear</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-2" for="color">Color</label>
+                                    <input class="w-full bg-input-light dark:bg-input-dark border-0 rounded-lg text-text-light dark:text-text-dark placeholder-gray-400 dark:placeholder-gray-500 focus:ring-primary focus:border-primary" id="color" placeholder="e.g., Blue" type="text"/>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-text-light dark:text-text-dark mb-2" for="brand">Brand</label>
+                                    <input class="w-full bg-input-light dark:bg-input-dark border-0 rounded-lg text-text-light dark:text-text-dark placeholder-gray-400 dark:placeholder-gray-500 focus:ring-primary focus:border-primary" id="brand" placeholder="e.g., Style Co." type="text"/>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Desktop Save Button -->
+                        <div class="hidden md:block mt-8">
+                            <button onclick="showPage('page-closet')" class="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-indigo-700 transition-colors">
+                                Save Item
+                            </button>
+                        </div>
+                    </main>
+                     <!-- Mobile Save Button Footer -->
+                    <footer class="md:hidden fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-background-light dark:bg-background-dark border-t border-border-light dark:border-border-dark">
+                        <button onclick="showPage('page-closet')" class="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-indigo-700 transition-colors">
+                            Save Item
+                        </button>
+                    </footer>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ===== Mobile Bottom Navigation Bar ===== -->
+        <nav id="mobile-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-card-light dark:bg-card-dark border-t border-border-light dark:border-border-dark z-30">
+            <div class="flex justify-around py-2 max-w-md mx-auto">
+                <button onclick="showPage('page-closet')" data-page="page-closet" class="nav-link flex flex-col items-center justify-center w-1/5">
+                    <span class="material-icons">checkroom</span><span class="text-xs font-medium">Closet</span>
+                </button>
+                <button onclick="showPage('page-planner')" data-page="page-planner" class="nav-link flex flex-col items-center justify-center w-1/5">
+                    <span class="material-icons">grid_view</span><span class="text-xs">Planner</span>
+                </button>
+                <button onclick="showPage('page-try-on')" data-page="page-try-on" class="nav-link flex flex-col items-center justify-center w-1/5">
+                    <span class="material-symbols-outlined">accessibility</span><span class="text-xs">Try-On</span>
+                </button>
+                <button onclick="showPage('page-inspiration')" data-page="page-inspiration" class="nav-link flex flex-col items-center justify-center w-1/5">
+                    <span class="material-icons">lightbulb</span><span class="text-xs">Inspiration</span>
+                </button>
+                <button onclick="showPage('page-profile')" data-page="page-profile" class="nav-link flex flex-col items-center justify-center w-1/5">
+                    <span class="material-icons">person</span><span class="text-xs">Profile</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const pages = document.querySelectorAll('.page-content');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const themeColorMeta = document.getElementById('theme-color-meta');
+        const mobileNav = document.getElementById('mobile-nav');
+
+
+        function showPage(pageId) {
+            pages.forEach(page => {
+                page.classList.add('hidden');
+                page.classList.remove('flex');
+            });
+
+            const activePage = document.getElementById(pageId);
+            if (activePage) {
+                activePage.classList.remove('hidden');
+                activePage.classList.add('flex');
+            }
+
+            // Show or hide the main mobile navigation
+            if (mobileNav) {
+                if (pageId === 'page-add-item') {
+                    mobileNav.classList.add('hidden');
+                } else {
+                    mobileNav.classList.remove('hidden');
+                }
+            }
+
+            let pageHasNavLink = false;
+            navLinks.forEach(link => {
+                if (link.dataset.page === pageId) {
+                    link.classList.add('text-primary');
+                    link.classList.remove('text-gray-500', 'dark:text-gray-400');
+                    pageHasNavLink = true;
+                } else {
+                    link.classList.remove('text-primary');
+                    link.classList.add('text-gray-500', 'dark:text-gray-400');
+                }
+            });
+
+            // If the new page doesn't correspond to a nav link (like the Add Item page),
+            // ensure the 'Closet' link is visually active since we came from there.
+            if (!pageHasNavLink && pageId === 'page-add-item') {
+                 navLinks.forEach(link => {
+                    if (link.dataset.page === 'page-closet') {
+                        link.classList.add('text-primary');
+                        link.classList.remove('text-gray-500', 'dark:text-gray-400');
+                    }
+                 });
+            }
+            
+            window.scrollTo(0, 0);
+        }
+        
+        function filterCloset(category) {
+            const filterButtonsContainer = document.getElementById('closet-filter-buttons');
+            const filterButtons = filterButtonsContainer.querySelectorAll('.filter-btn');
+            const closetItems = document.querySelectorAll('#closet-grid .clothing-item');
+
+            filterButtons.forEach(button => {
+                const buttonCategory = button.textContent.toLowerCase();
+                if (buttonCategory === category) {
+                    button.classList.add('bg-primary', 'text-white');
+                    button.classList.remove('bg-card-light', 'dark:bg-card-dark', 'text-text-light', 'dark:text-text-dark');
+                } else {
+                    button.classList.remove('bg-primary', 'text-white');
+                    button.classList.add('bg-card-light', 'dark:bg-card-dark', 'text-text-light', 'dark:text-text-dark');
+                }
+            });
+
+            closetItems.forEach(item => {
+                if (category === 'all' || item.dataset.category === category) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        function setTheme(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                if(themeColorMeta) themeColorMeta.setAttribute('content', '#111827'); // Dark background color
+                if(darkModeToggle) darkModeToggle.checked = true;
+                localStorage.setItem('color-theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                if(themeColorMeta) themeColorMeta.setAttribute('content', '#F9FAFB'); // Light background color
+                if(darkModeToggle) darkModeToggle.checked = false;
+                localStorage.setItem('color-theme', 'light');
+            }
+        }
+
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            setTheme(true);
+        } else {
+            setTheme(false);
+        }
+
+        if(darkModeToggle) {
+            darkModeToggle.addEventListener('change', function() {
+                setTheme(darkModeToggle.checked);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('page-closet');
+        });
+    </script>
+</body>
+</html>
+
