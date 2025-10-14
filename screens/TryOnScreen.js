@@ -47,30 +47,32 @@ export default function TryOnScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.modelContainer}>
-          <Image
-            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIOuuK3imy2vlHcS1_k722fU-TAp4s1_1tVH951LM6JiFjQsHsiG4QrMWOyrycnqSF6UuHA9qG5YzvElsL5oPlgmF4ZhVS4M3f8jrR1tqZYYodIRsFtZpty4R6PoRBOntfekWjls-m6Ucm2XWrEV_5peclenC24wp9zLyU9u9rpSW6Y6L3CdMtPFefG4VsSN_B29i2nN0OoYcdS0-YXCr7AZN19sMO1wq9BnfUk_fBJpZBepmEGpDCENTtF-AkBaeJoDGj5mVRoh9R' }}
-            style={styles.modelImage}
-            resizeMode="cover"
-          />
-          <View style={styles.overlay}>
-            <View style={styles.buttonGroup}>
-              <TouchableOpacity style={styles.overlayButton}>
-                <MaterialCommunityIcons name="creation" size={16} color="#FFFFFF" />
-                <Text style={styles.overlayButtonText}>AI Gen</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.overlayButton}>
-                <MaterialIcons name="shuffle" size={16} color="#FFFFFF" />
-                <Text style={styles.overlayButtonText}>Shuffle</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.iconGroup}>
-              <TouchableOpacity style={styles.iconButton}>
-                <MaterialIcons name="person" size={20} color="#FFFFFF" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconButton}>
-                <MaterialIcons name="file-upload" size={20} color="#FFFFFF" />
-              </TouchableOpacity>
+        <View style={{ alignItems: 'center' }}>
+          <View style={styles.modelContainer}>
+            <Image
+              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIOuuK3imy2vlHcS1_k722fU-TAp4s1_1tVH951LM6JiFjQsHsiG4QrMWOyrycnqSF6UuHA9qG5YzvElsL5oPlgmF4ZhVS4M3f8jrR1tqZYYodIRsFtZpty4R6PoRBOntfekWjls-m6Ucm2XWrEV_5peclenC24wp9zLyU9u9rpSW6Y6L3CdMtPFefG4VsSN_B29i2nN0OoYcdS0-YXCr7AZN19sMO1wq9BnfUk_fBJpZBepmEGpDCENTtF-AkBaeJoDGj5mVRoh9R' }}
+              style={styles.modelImage}
+              resizeMode="cover"
+            />
+            <View style={styles.overlay}>
+              <View style={styles.buttonGroup}>
+                <TouchableOpacity style={styles.overlayButton}>
+                  <MaterialCommunityIcons name="creation" size={16} color="#FFFFFF" />
+                  <Text style={styles.overlayButtonText}>AI Gen</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.overlayButton}>
+                  <MaterialIcons name="shuffle" size={16} color="#FFFFFF" />
+                  <Text style={styles.overlayButtonText}>Shuffle</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.iconGroup}>
+                <TouchableOpacity style={styles.iconButton}>
+                  <MaterialIcons name="person" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconButton}>
+                  <MaterialIcons name="file-upload" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -141,8 +143,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderRadius: 12,
     overflow: 'hidden',
-    aspectRatio: 3/4,
+    aspectRatio: 3 / 4,
     backgroundColor: '#1F2937',
+    width: 340, // Updated width as per instructions
   },
   modelImage: {
     width: '100%',
