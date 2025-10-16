@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -34,63 +36,69 @@ export default function AddItemScreen({ navigation }) {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.form}>
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: themedColors.text }]}>Photo</Text>
-            <TouchableOpacity style={[styles.photoUpload, { backgroundColor: themedColors.card, borderColor: themedColors.border }]}>
-              <MaterialIcons name="add-a-photo" size={48} color={themedColors.textSecondary} />
-              <Text style={[styles.photoText, { color: themedColors.textSecondary }]}>Tap to upload a photo</Text>
-              <Text style={[styles.photoSubtext, { color: themedColors.textSecondary }]}>or take a new one</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: themedColors.text }]}>Item Name</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: themedColors.input, color: themedColors.text }]}
-              placeholder="e.g., Comfy Blue Jeans"
-              placeholderTextColor={themedColors.textSecondary}
-              value={itemName}
-              onChangeText={setItemName}
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: themedColors.text }]}>Category</Text>
-            <View style={[styles.pickerContainer, { backgroundColor: themedColors.input }]}>
-              <Text style={[styles.pickerText, { color: category ? themedColors.text : themedColors.textSecondary }]}>
-                {category || 'Select a category'}
-              </Text>
-              <MaterialIcons name="arrow-drop-down" size={24} color={themedColors.textSecondary} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={80}
+      >
+        <ScrollView style={styles.content}>
+          <View style={styles.form}>
+            <View style={styles.formGroup}>
+              <Text style={[styles.label, { color: themedColors.text }]}>Photo</Text>
+              <TouchableOpacity style={[styles.photoUpload, { backgroundColor: themedColors.card, borderColor: themedColors.border }]}>
+                <MaterialIcons name="add-a-photo" size={48} color={themedColors.textSecondary} />
+                <Text style={[styles.photoText, { color: themedColors.textSecondary }]}>Tap to upload a photo</Text>
+                <Text style={[styles.photoSubtext, { color: themedColors.textSecondary }]}>or take a new one</Text>
+              </TouchableOpacity>
             </View>
-          </View>
 
-          <View style={styles.row}>
-            <View style={[styles.formGroup, styles.halfWidth]}>
-              <Text style={[styles.label, { color: themedColors.text }]}>Color</Text>
+            <View style={styles.formGroup}>
+              <Text style={[styles.label, { color: themedColors.text }]}>Item Name</Text>
               <TextInput
                 style={[styles.input, { backgroundColor: themedColors.input, color: themedColors.text }]}
-                placeholder="e.g., Blue"
+                placeholder="e.g., Comfy Blue Jeans"
                 placeholderTextColor={themedColors.textSecondary}
-                value={color}
-                onChangeText={setColor}
+                value={itemName}
+                onChangeText={setItemName}
               />
             </View>
 
-            <View style={[styles.formGroup, styles.halfWidth]}>
-              <Text style={[styles.label, { color: themedColors.text }]}>Brand</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: themedColors.input, color: themedColors.text }]}
-                placeholder="e.g., Style Co."
-                placeholderTextColor={themedColors.textSecondary}
-                value={brand}
-                onChangeText={setBrand}
-              />
+            <View style={styles.formGroup}>
+              <Text style={[styles.label, { color: themedColors.text }]}>Category</Text>
+              <View style={[styles.pickerContainer, { backgroundColor: themedColors.input }]}>
+                <Text style={[styles.pickerText, { color: category ? themedColors.text : themedColors.textSecondary }]}>
+                  {category || 'Select a category'}
+                </Text>
+                <MaterialIcons name="arrow-drop-down" size={24} color={themedColors.textSecondary} />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={[styles.formGroup, styles.halfWidth]}>
+                <Text style={[styles.label, { color: themedColors.text }]}>Color</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: themedColors.input, color: themedColors.text }]}
+                  placeholder="e.g., Blue"
+                  placeholderTextColor={themedColors.textSecondary}
+                  value={color}
+                  onChangeText={setColor}
+                />
+              </View>
+
+              <View style={[styles.formGroup, styles.halfWidth]}>
+                <Text style={[styles.label, { color: themedColors.text }]}>Brand</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: themedColors.input, color: themedColors.text }]}
+                  placeholder="e.g., Style Co."
+                  placeholderTextColor={themedColors.textSecondary}
+                  value={brand}
+                  onChangeText={setBrand}
+                />
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <View style={[styles.footer, { backgroundColor: themedColors.background, borderTopColor: themedColors.border }]}>
         <TouchableOpacity
