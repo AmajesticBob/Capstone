@@ -64,7 +64,7 @@ npm run ios      # For iOS
 
 ## Original HTML Version
 
-The original web version is available in `index.html` and uses:
+The original web version is available in `wireframe.html` and uses:
 - Vanilla JavaScript
 - Tailwind CSS
 - Material Icons
