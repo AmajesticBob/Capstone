@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../ThemeContext';
 import { colors, getThemedColors } from '../theme';
 
-export default function AddItemScreen({ navigation }) {
+export default function AddItemScreen() {
+  const router = useRouter();
   const { isDark } = useTheme();
   const themedColors = getThemedColors(isDark);
   const [itemName, setItemName] = useState('');
@@ -23,13 +25,13 @@ export default function AddItemScreen({ navigation }) {
   const [category, setCategory] = useState('');
 
   const handleSave = () => {
-    navigation.goBack();
+    router.back();
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themedColors.background }]}>
       <View style={[styles.header, { backgroundColor: themedColors.background, borderBottomColor: themedColors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back-ios" size={24} color={themedColors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: themedColors.text }]}>Add New Item</Text>

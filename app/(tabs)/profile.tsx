@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useTheme } from '../ThemeContext';
-import { colors, getThemedColors } from '../theme';
+import { useTheme } from '../../ThemeContext';
+import { colors, getThemedColors } from '../../theme';
 
 export default function ProfileScreen() {
   const { isDark, toggleTheme } = useTheme();

@@ -6,8 +6,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../ThemeContext';
-import { getThemedColors } from '../theme';
+import { useTheme } from '../../ThemeContext';
+import { getThemedColors } from '../../theme';
 
 const suggestions = {
   complementary: [

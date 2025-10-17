@@ -13,8 +13,10 @@ A React Native mobile application for managing your wardrobe, planning outfits, 
 ## Tech Stack
 
 - React Native with Expo
-- React Navigation (Bottom Tabs & Stack)
+- **Expo Router** with file-based routing
+- **Native Tabs** with iOS liquid glass blur effect
 - Expo Vector Icons
+- TypeScript
 - Context API for theme management
 - Dark mode support
 
@@ -43,17 +45,20 @@ npm run ios      # For iOS
 ## Project Structure
 
 ```
-├── App.js                    # Main app component with navigation
-├── index.js                  # Entry point
+├── app/                      # Expo Router app directory
+│   ├── (tabs)/              # Tab-based navigation group
+│   │   ├── _layout.tsx      # Native tabs layout with iOS blur
+│   │   ├── index.tsx        # Closet screen (default tab)
+│   │   ├── planner.tsx      # Color planning screen
+│   │   ├── try-on.tsx       # Virtual try-on screen
+│   │   ├── inspiration.tsx  # Inspiration and upload screen
+│   │   └── profile.tsx      # User profile and settings
+│   ├── _layout.tsx          # Root layout
+│   └── add-item.tsx         # Add new item modal
 ├── theme.js                  # Color theme configuration
 ├── ThemeContext.js           # Dark mode context provider
-└── screens/
-    ├── ClosetScreen.js       # Closet management screen
-    ├── PlannerScreen.js      # Color planning screen
-    ├── TryOnScreen.js        # Virtual try-on screen
-    ├── InspirationScreen.js  # Inspiration and upload screen
-    ├── ProfileScreen.js      # User profile and settings
-    └── AddItemScreen.js      # Add new item modal
+├── app.json                  # Expo configuration with router plugin
+└── tsconfig.json             # TypeScript configuration
 
 ```
 
@@ -68,7 +73,24 @@ The original web version is available in `index.html` and uses:
 ## Conversion Notes
 
 This React Native version maintains the same functionality and UI/UX as the original HTML version while adapting it for native mobile platforms with:
-- Native navigation patterns
+- **Expo Router** for file-based routing
+- **Native Tabs** with iOS liquid glass blur effect (`systemMaterialLight`/`systemMaterialDark`)
+- Type-safe navigation with TypeScript
 - Touch-optimized interactions
 - Platform-specific components
 - Dark mode support using system preferences
+
+## Key Features
+
+### iOS Liquid Glass Effect
+The tab bar uses native iOS blur effects:
+- Light mode: `systemMaterialLight` 
+- Dark mode: `systemMaterialDark`
+- Provides translucent, frosted glass appearance on iOS
+- Falls back to solid colors on Android
+
+### File-Based Routing
+Uses Expo Router's file-based routing system:
+- Routes are automatically generated from the `app/` directory structure
+- Groups routes using `(tabs)` directory
+- Type-safe navigation with `useRouter()` hook

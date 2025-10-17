@@ -8,8 +8,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useTheme } from '../ThemeContext';
-import { colors, getThemedColors } from '../theme';
+import { useRouter } from 'expo-router';
+import { useTheme } from '../../ThemeContext';
+import { colors, getThemedColors } from '../../theme';
 
 const closetItems = [
   { id: 1, name: 'White Tee', category: 'top', color: '#FFFFFF' },
@@ -23,7 +24,8 @@ const closetItems = [
   { id: 9, name: 'Pink Blouse', category: 'top', color: '#FBCFE8' },
 ];
 
-export default function ClosetScreen({ navigation }) {
+export default function ClosetScreen() {
+  const router = useRouter();
   const { isDark } = useTheme();
   const themedColors = getThemedColors(isDark);
   const [selectedFilter, setSelectedFilter] = useState('all');
@@ -74,7 +76,7 @@ export default function ClosetScreen({ navigation }) {
           </ScrollView>
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: colors.primary }]}
-            onPress={() => navigation.navigate('AddItem')}
+            onPress={() => router.push('/add-item')}
           >
             <MaterialIcons name="add" size={20} color="#FFFFFF" />
           </TouchableOpacity>
