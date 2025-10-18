@@ -8,24 +8,49 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../ThemeContext';
 import { colors, getThemedColors } from '../theme';
+import { GlassView } from 'expo-glass-effect';
+import { useAlert } from '../components/Alert';
 
 export default function AddItemScreen() {
   const router = useRouter();
-  const { isDark } = useTheme();
+  const { isDark, syncWithSystem } = useTheme();
   const themedColors = getThemedColors(isDark);
+  const { showAlert, AlertComponent } = useAlert();
   const [itemName, setItemName] = useState('');
   const [color, setColor] = useState('');
   const [brand, setBrand] = useState('');
   const [category, setCategory] = useState('');
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+
+  const categories = ['Tops', 'Bottoms', 'Shoes'];
 
   const handleSave = () => {
+    // Validate required fields
+    if (!itemName.trim()) {
+      showAlert('Please enter an item name', 'Validation Error');
+      return;
+    }
+    if (!category) {
+      showAlert('Please select a category', 'Validation Error');
+      return;
+    }
+    
+    // Here you would normally save the item to your data store
+    // For now, we'll just navigate back
     router.back();
+  };
+
+  const handleCategorySelect = (selectedCategory: string) => {
+    setCategory(selectedCategory);
+    setShowCategoryMenu(false);
   };
 
   return (
@@ -67,12 +92,15 @@ export default function AddItemScreen() {
 
             <View style={styles.formGroup}>
               <Text style={[styles.label, { color: themedColors.text }]}>Category</Text>
-              <View style={[styles.pickerContainer, { backgroundColor: themedColors.input }]}>
+              <TouchableOpacity 
+                style={[styles.pickerContainer, { backgroundColor: themedColors.input }]}
+                onPress={() => setShowCategoryMenu(true)}
+              >
                 <Text style={[styles.pickerText, { color: category ? themedColors.text : themedColors.textSecondary }]}>
                   {category || 'Select a category'}
                 </Text>
                 <MaterialIcons name="arrow-drop-down" size={24} color={themedColors.textSecondary} />
-              </View>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.row}>
@@ -102,6 +130,70 @@ export default function AddItemScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
+      {/* Category Selection Modal with Glass Effect */}
+      <Modal
+        visible={showCategoryMenu}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCategoryMenu(false)}
+        supportedOrientations={['portrait']}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setShowCategoryMenu(false)}
+        >
+          <View style={styles.modalContent}>
+            {Platform.OS === 'ios' && syncWithSystem ? (
+              <GlassView 
+                style={styles.glassMenu}
+                glassEffectStyle="regular"
+                isInteractive={true}
+              >
+                <View style={styles.menuHeader}>
+                  <Text style={styles.menuTitle}>Select Category</Text>
+                </View>
+                {categories.map((cat, index) => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[
+                      styles.menuItem,
+                      index === categories.length - 1 && styles.menuItemLast
+                    ]}
+                    onPress={() => handleCategorySelect(cat)}
+                  >
+                    <Text style={styles.menuItemText}>{cat}</Text>
+                    {category === cat && (
+                      <MaterialIcons name="check" size={24} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </GlassView>
+            ) : (
+              <View style={[styles.glassMenu, { backgroundColor: themedColors.card }]}>
+                <View style={styles.menuHeader}>
+                  <Text style={[styles.menuTitle, { color: themedColors.text }]}>Select Category</Text>
+                </View>
+                {categories.map((cat, index) => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[
+                      styles.menuItem,
+                      index === categories.length - 1 && styles.menuItemLast
+                    ]}
+                    onPress={() => handleCategorySelect(cat)}
+                  >
+                    <Text style={[styles.menuItemText, { color: themedColors.text }]}>{cat}</Text>
+                    {category === cat && (
+                      <MaterialIcons name="check" size={24} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        </Pressable>
+      </Modal>
+
       <View style={[styles.footer, { backgroundColor: themedColors.background, borderTopColor: themedColors.border }]}>
         <TouchableOpacity
           style={[styles.saveButton, { backgroundColor: colors.primary }]}
@@ -110,6 +202,7 @@ export default function AddItemScreen() {
           <Text style={styles.saveButtonText}>Save Item</Text>
         </TouchableOpacity>
       </View>
+      <AlertComponent />
     </SafeAreaView>
   );
 }
@@ -207,5 +300,44 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    maxWidth: 400,
+  },
+  glassMenu: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    padding: 20,
+  },
+  menuHeader: {
+    marginBottom: 16,
+  },
+  menuTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  menuItemLast: {
+    borderBottomWidth: 0,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: '#FFFFFF',
   },
 });

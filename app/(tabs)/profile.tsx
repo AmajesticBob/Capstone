@@ -14,7 +14,7 @@ import { useTheme } from '../../ThemeContext';
 import { colors, getThemedColors } from '../../theme';
 
 export default function ProfileScreen() {
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, toggleTheme, syncWithSystem, toggleSyncWithSystem } = useTheme();
   const themedColors = getThemedColors(isDark);
 
   return (
@@ -82,12 +82,25 @@ export default function ProfileScreen() {
             </TouchableOpacity>
             <View style={styles.menuItem}>
               <View style={styles.menuItemLeft}>
+                <MaterialIcons name="brightness-auto" size={24} color={themedColors.textSecondary} />
+                <Text style={[styles.menuItemText, { color: themedColors.text }]}>Sync Theme with System</Text>
+              </View>
+              <Switch
+                value={syncWithSystem}
+                onValueChange={toggleSyncWithSystem}
+                trackColor={{ false: '#E5E7EB', true: colors.primary }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+            <View style={[styles.menuItem, !syncWithSystem && styles.menuItemEnabled]}>
+              <View style={styles.menuItemLeft}>
                 <MaterialIcons name="dark-mode" size={24} color={themedColors.textSecondary} />
                 <Text style={[styles.menuItemText, { color: themedColors.text }]}>Dark Mode</Text>
               </View>
               <Switch
                 value={isDark}
                 onValueChange={toggleTheme}
+                disabled={syncWithSystem}
                 trackColor={{ false: '#E5E7EB', true: colors.primary }}
                 thumbColor="#FFFFFF"
               />
@@ -209,5 +222,8 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     marginLeft: 16,
+  },
+  menuItemEnabled: {
+    opacity: 1,
   },
 });

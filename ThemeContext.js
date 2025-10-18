@@ -5,18 +5,25 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const systemColorScheme = useColorScheme();
+  const [syncWithSystem, setSyncWithSystem] = useState(true);
   const [isDark, setIsDark] = useState(systemColorScheme === 'dark');
 
   useEffect(() => {
-    setIsDark(systemColorScheme === 'dark');
-  }, [systemColorScheme]);
+    if (syncWithSystem) {
+      setIsDark(systemColorScheme === 'dark');
+    }
+  }, [systemColorScheme, syncWithSystem]);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
   };
 
+  const toggleSyncWithSystem = () => {
+    setSyncWithSystem(!syncWithSystem);
+  };
+
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ isDark, toggleTheme, syncWithSystem, toggleSyncWithSystem }}>
       {children}
     </ThemeContext.Provider>
   );
