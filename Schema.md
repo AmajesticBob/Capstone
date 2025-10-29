@@ -150,11 +150,3 @@ After setting up the database:
 6. Test username availability checking during signup
 7. Test profile updates and password changes
 8. Test account deletion (verify user is removed from both profiles and auth.users tables)
-
-## Troubleshooting
-
-- **RLS Errors**: Make sure RLS policies are correctly set up
-- **Email Not Received**: Check Supabase Auth settings and spam folder
-- **Username Already Exists**: The app checks for username availability before signup
-- **Profile Not Created**: Check if the trigger and policies are correctly set up
-- **Account Deletion Issues**: Ensure the `delete_user_account()` function is created with `SECURITY DEFINER`
