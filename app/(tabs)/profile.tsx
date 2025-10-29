@@ -5,64 +5,103 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Switch,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../ThemeContext';
 import { colors, getThemedColors } from '../../theme';
 
 export default function ProfileScreen() {
+  const router = useRouter();
+  const { profile, signOut, deleteAccount } = useAuth();
   const { isDark, toggleTheme, syncWithSystem, toggleSyncWithSystem } = useTheme();
   const themedColors = getThemedColors(isDark);
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await signOut();
+            router.replace('/(auth)/login');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+              router.replace('/(auth)/login');
+            } catch (error) {
+              const message = error instanceof Error ? error.message : 'Failed to delete account. Please try again.';
+              Alert.alert('Error', message);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themedColors.background }]}>
       <View style={[styles.header, { backgroundColor: themedColors.background, borderBottomColor: themedColors.border }]}>
         <Text style={[styles.headerTitle, { color: themedColors.text }]}>Profile</Text>
-        <TouchableOpacity style={styles.moreButton}>
-          <MaterialIcons name="more-horiz" size={24} color={themedColors.text} />
-        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
-            <Image
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCpApFXTCwbbmJOOSvLVNZh32l8sTojvUNrfQsZy6VmEcRdz_s-6QQ-hQeCi1R52b2D-fFR59YGJqDOxjZWIB5WqlE1Ikql_a9Vifq-YdlLkonz4WEEeNB76ipCSKWcGb-AzVLhcSc5gZSur8vYjd3pwxJIJ5-oPuo3Az1NA7AzTsCNEblIk9juhUnW3Jgh9GtKXpJyT8rTH5nM7QNf7xHCPOtZ6OjoFEgwx19LvrPXQMH7dOOEt-9NTx2x9O3cWfZqRDjdRS9MvpkU' }}
-              style={styles.avatar}
-            />
-            <TouchableOpacity style={styles.editButton}>
-              <MaterialIcons name="edit" size={14} color="#FFFFFF" />
-            </TouchableOpacity>
+            <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+              <Text style={styles.avatarText}>
+                {profile?.username?.charAt(0).toUpperCase() || 'U'}
+              </Text>
+            </View>
           </View>
-          <Text style={[styles.userName, { color: themedColors.text }]}>Jane Doe</Text>
-          <Text style={[styles.userHandle, { color: themedColors.textSecondary }]}>@Jane.style</Text>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: themedColors.text }]}>152</Text>
-            <Text style={[styles.statLabel, { color: themedColors.textSecondary }]}>Items</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: themedColors.text }]}>89</Text>
-            <Text style={[styles.statLabel, { color: themedColors.textSecondary }]}>Outfits</Text>
-          </View>
+          <Text style={[styles.userName, { color: themedColors.text }]}>
+            {profile?.username || 'User'}
+          </Text>
+          <Text style={[styles.userEmail, { color: themedColors.textSecondary }]}>
+            {profile?.email || ''}
+          </Text>
         </View>
 
         <View style={styles.menuSection}>
           <View style={[styles.menuCard, { backgroundColor: themedColors.card }]}>
             <Text style={[styles.menuCardTitle, { color: themedColors.text }]}>Account</Text>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(profile)/edit-profile')}
+            >
               <View style={styles.menuItemLeft}>
                 <MaterialIcons name="person-outline" size={24} color={themedColors.textSecondary} />
                 <Text style={[styles.menuItemText, { color: themedColors.text }]}>Edit Profile</Text>
               </View>
               <MaterialIcons name="chevron-right" size={24} color={themedColors.textSecondary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(profile)/change-password')}
+            >
               <View style={styles.menuItemLeft}>
                 <MaterialIcons name="lock-outline" size={24} color={themedColors.textSecondary} />
                 <Text style={[styles.menuItemText, { color: themedColors.text }]}>Change Password</Text>
@@ -73,13 +112,6 @@ export default function ProfileScreen() {
 
           <View style={[styles.menuCard, { backgroundColor: themedColors.card }]}>
             <Text style={[styles.menuCardTitle, { color: themedColors.text }]}>Preferences</Text>
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuItemLeft}>
-                <MaterialIcons name="notifications-none" size={24} color={themedColors.textSecondary} />
-                <Text style={[styles.menuItemText, { color: themedColors.text }]}>Notifications</Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={24} color={themedColors.textSecondary} />
-            </TouchableOpacity>
             <View style={styles.menuItem}>
               <View style={styles.menuItemLeft}>
                 <MaterialIcons name="brightness-auto" size={24} color={themedColors.textSecondary} />
@@ -108,10 +140,16 @@ export default function ProfileScreen() {
           </View>
 
           <View style={[styles.menuCard, { backgroundColor: themedColors.card }]}>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
               <View style={styles.menuItemLeft}>
                 <MaterialIcons name="logout" size={24} color="#EF4444" />
                 <Text style={[styles.menuItemText, { color: '#EF4444' }]}>Logout</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={handleDeleteAccount}>
+              <View style={styles.menuItemLeft}>
+                <MaterialIcons name="delete-forever" size={24} color="#DC2626" />
+                <Text style={[styles.menuItemText, { color: '#DC2626' }]}>Delete Account</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -139,10 +177,6 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  moreButton: {
-    position: 'absolute',
-    right: 16,
-  },
   content: {
     flex: 1,
     paddingHorizontal: 16,
@@ -159,40 +193,20 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-  },
-  editButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 4,
   },
-  userHandle: {
-    fontSize: 14,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 32,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  statLabel: {
+  userEmail: {
     fontSize: 14,
   },
   menuSection: {

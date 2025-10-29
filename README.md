@@ -1,23 +1,25 @@
 # Outfit Planner - React Native App
 
-A React Native mobile application for managing your wardrobe, planning outfits, and getting style inspiration.
+A React Native mobile application for managing your wardrobe, planning outfits, and getting style inspiration with secure user authentication.
 
 ## Features
 
-- **My Closet**: Browse and manage your clothing items with filtering by category (Tops, Bottoms, Shoes)
+- **User Authentication**: Secure sign-up and login with email verification
+- **My Closet**: Browse and manage your clothing items
 - **Planner**: Get smart color suggestions based on selected items
-- **Virtual Try-On**: Preview outfit combinations with AI-generated looks
-- **Inspiration**: Upload photos for outfit ideas and view inspired looks
+- **Virtual Try-On**: Preview outfit combinations
+- **Inspiration**: Upload photos for outfit ideas
 - **Profile**: Manage account settings and preferences, including dark mode
 
 ## Tech Stack
 
 - React Native with Expo
 - **Expo Router** with file-based routing
+- **Supabase** for authentication and backend
 - **Native Tabs** with iOS liquid glass blur effect
 - Expo Vector Icons
 - TypeScript
-- Context API for theme management
+- Context API for theme and auth management
 - Dark mode support
 
 ## Installation
@@ -27,12 +29,21 @@ A React Native mobile application for managing your wardrobe, planning outfits, 
 npm install
 ```
 
-2. Start the development server:
+2. Set up Supabase:
+   - Create a Supabase project at https://supabase.com
+   - Follow the instructions in `SUPABASE_SETUP.md` to set up the database schema
+   - Create a `.env` file in the project root:
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=your-supabase-project-url
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   ```
+
+3. Start the development server:
 ```bash
 npm start
 ```
 
-3. Run on your device:
+4. Run on your device:
 - Install the Expo Go app on your iOS or Android device
 - Scan the QR code from the terminal
 
@@ -42,10 +53,34 @@ npm run android  # For Android
 npm run ios      # For iOS
 ```
 
+## Authentication Features
+
+### Sign Up
+- Username validation (3-15 characters, letters, numbers, underscore)
+- Real-time username availability checking
+- Email format validation
+- Password strength indicator
+- Email verification via OTP (One-Time Password)
+
+### Login
+- Secure email and password authentication
+- Session persistence
+- Protected routes
+
+### Profile Management
+- View user profile with username and email
+- Edit profile (username)
+- Change password securely
+- Logout functionality
+
 ## Project Structure
 
 ```
 ├── app/                      # Expo Router app directory
+│   ├── (auth)/              # Authentication screens
+│   │   ├── login.tsx        # Login screen
+│   │   ├── signup.tsx       # Sign-up with validation
+│   │   └── verify-otp.tsx   # OTP verification
 │   ├── (tabs)/              # Tab-based navigation group
 │   │   ├── _layout.tsx      # Native tabs layout with iOS blur
 │   │   ├── index.tsx        # Closet screen (default tab)
@@ -53,34 +88,52 @@ npm run ios      # For iOS
 │   │   ├── try-on.tsx       # Virtual try-on screen
 │   │   ├── inspiration.tsx  # Inspiration and upload screen
 │   │   └── profile.tsx      # User profile and settings
-│   ├── _layout.tsx          # Root layout
+│   ├── (profile)/           # Profile management screens
+│   │   ├── edit-profile.tsx # Edit user profile
+│   │   └── change-password.tsx # Change password
+│   ├── _layout.tsx          # Root layout with auth provider
+│   ├── index.tsx            # Auth state router
 │   └── add-item.tsx         # Add new item modal
+├── contexts/                 # React contexts
+│   └── AuthContext.tsx      # Authentication context
+├── lib/                      # Library configurations
+│   └── supabase.ts          # Supabase client setup
 ├── theme.js                  # Color theme configuration
 ├── ThemeContext.js           # Dark mode context provider
-├── app.json                  # Expo configuration with router plugin
-└── tsconfig.json             # TypeScript configuration
-
+├── SUPABASE_SETUP.md        # Database setup instructions
+├── .env.example             # Environment variables template
+└── tsconfig.json            # TypeScript configuration
 ```
 
-## Original HTML Version
+## Database Schema
 
-The original web version is available in `wireframe.html` and uses:
-- Vanilla JavaScript
-- Tailwind CSS
-- Material Icons
-- Progressive Web App features
+The app uses Supabase with the following schema:
 
-## Conversion Notes
+### Profiles Table
+- `id` (UUID, primary key, references auth.users)
+- `username` (TEXT, unique, 3-15 characters)
+- `email` (TEXT, unique)
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
 
-This React Native version maintains the same functionality and UI/UX as the original HTML version while adapting it for native mobile platforms with:
-- **Expo Router** for file-based routing
-- **Native Tabs** with iOS liquid glass blur effect (`systemMaterialLight`/`systemMaterialDark`)
-- Type-safe navigation with TypeScript
-- Touch-optimized interactions
-- Platform-specific components
-- Dark mode support using system preferences
+See `SUPABASE_SETUP.md` for complete setup instructions.
 
 ## Key Features
+
+### Authentication Flow
+1. User signs up with username, email, and password
+2. System validates username availability in real-time
+3. Email with OTP is sent for verification
+4. User enters OTP to complete registration
+5. Profile is created in database
+6. User can now log in and access the app
+
+### Security Features
+- Password hashing and salting handled by Supabase Auth
+- Row Level Security (RLS) policies on database
+- Unique constraints on username and email
+- Session management with secure storage
+- Protected routes requiring authentication
 
 ### iOS Liquid Glass Effect
 The tab bar uses native iOS blur effects:
@@ -92,5 +145,55 @@ The tab bar uses native iOS blur effects:
 ### File-Based Routing
 Uses Expo Router's file-based routing system:
 - Routes are automatically generated from the `app/` directory structure
-- Groups routes using `(tabs)` directory
+- Groups routes using `(auth)`, `(tabs)`, and `(profile)` directories
 - Type-safe navigation with `useRouter()` hook
+
+## Environment Variables
+
+Required environment variables (create a `.env` file):
+
+```
+EXPO_PUBLIC_SUPABASE_URL=your-supabase-project-url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+See `.env.example` for reference.
+
+## Troubleshooting
+
+### Authentication Issues
+- Make sure Supabase is properly configured (see `Schema.md`)
+- Check that environment variables are set correctly in `.env`
+- Verify email confirmation is enabled in Supabase Auth settings
+- Make sure you've run all SQL commands in `Schema.md`
+
+### Build Issues
+- Run `npm install` to ensure all dependencies are installed
+- Clear Expo cache: `npx expo start -c`
+- Make sure you have the latest version of Expo CLI
+
+### Database Issues
+- Run the SQL commands in `SUPABASE_SETUP.md` in order
+- Check Row Level Security policies are properly set
+- Verify the `profiles` table exists and has the correct schema
+- Ensure Supabase Auth email confirmations are enabled
+
+### Username Availability
+- The app checks username availability in real-time (debounced at 500ms)
+- Usernames must be 3-15 characters (letters, numbers, underscore only)
+- If a username is taken, try a different one
+
+### OTP Not Received
+- Check your spam folder
+- Verify email settings in Supabase Dashboard > Authentication > Settings
+- Try resending the OTP code
+- Make sure the email address is valid
+
+## Original HTML Version
+
+The original web version is available in `wireframe.html` and uses:
+- Vanilla JavaScript
+- Tailwind CSS
+- Material Icons
+- Progressive Web App features
+
