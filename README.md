@@ -31,7 +31,7 @@ npm install
 
 2. Set up Supabase:
    - Create a Supabase project at https://supabase.com
-   - Follow the instructions in `SUPABASE_SETUP.md` to set up the database schema
+   - Follow the instructions in `Schema.md` to set up the database schema
    - Create a `.env` file in the project root:
    ```
    EXPO_PUBLIC_SUPABASE_URL=your-supabase-project-url
@@ -100,7 +100,7 @@ npm run ios      # For iOS
 │   └── supabase.ts          # Supabase client setup
 ├── theme.js                  # Color theme configuration
 ├── ThemeContext.js           # Dark mode context provider
-├── SUPABASE_SETUP.md        # Database setup instructions
+├── Schema.md        # Database setup instructions
 ├── .env.example             # Environment variables template
 └── tsconfig.json            # TypeScript configuration
 ```
@@ -116,7 +116,7 @@ The app uses Supabase with the following schema:
 - `created_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
 
-See `SUPABASE_SETUP.md` for complete setup instructions.
+See `Schema.md` for complete setup instructions.
 
 ## Key Features
 
@@ -173,7 +173,7 @@ See `.env.example` for reference.
 - Make sure you have the latest version of Expo CLI
 
 ### Database Issues
-- Run the SQL commands in `SUPABASE_SETUP.md` in order
+- Run the SQL commands in `Schema.md` in order
 - Check Row Level Security policies are properly set
 - Verify the `profiles` table exists and has the correct schema
 - Ensure Supabase Auth email confirmations are enabled
