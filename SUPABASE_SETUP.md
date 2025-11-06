@@ -73,10 +73,6 @@ CREATE POLICY "Anyone can check username availability"
   USING (true);
 ```
 
-**Note:** If you already have the old "Service role can insert profiles" policy, you need to drop it first:
-```sql
-DROP POLICY IF EXISTS "Service role can insert profiles" ON public.profiles;
-```
 
 ### 3. Create Updated At Trigger
 
@@ -251,14 +247,5 @@ TO authenticated
 USING (bucket_id = 'item-images' AND auth.uid()::text = (storage.foldername(name))[1]);
 ```
 
-**Note**: Images will be organized in folders by user ID: `item-images/{user_id}/{filename}`
+Images will be organized in folders by user ID: `item-images/{user_id}/{filename}`
 
-## Troubleshooting
-
-- **RLS Errors**: Make sure RLS policies are correctly set up
-- **Email Not Received**: Check Supabase Auth settings and spam folder
-- **Username Already Exists**: The app checks for username availability before signup
-- **Profile Not Created**: Check if the trigger and policies are correctly set up
-- **Account Deletion Issues**: Ensure the `delete_user_account()` function is created with `SECURITY DEFINER`
-- **Image Upload Issues**: Make sure the `item-images` bucket is created and set to public
-- **Items Not Showing**: Verify RLS policies on items table and that items are associated with the correct user_id
