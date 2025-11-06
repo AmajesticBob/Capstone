@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,17 +16,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../ThemeContext';
 import { colors, getThemedColors } from '../theme';
 import { GlassView } from 'expo-glass-effect';
 import { useAlert } from '../components/Alert';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../contexts/AuthContext';
-import { uploadItemImage, createItem } from '../lib/items';
+import { uploadItemImage, updateItem, deleteItem, getUserItems } from '../lib/items';
 
-export default function AddItemScreen() {
+export default function EditItemScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams();
   const { isDark, syncWithSystem } = useTheme();
   const themedColors = getThemedColors(isDark);
   const { showAlert, AlertComponent } = useAlert();
@@ -37,11 +38,45 @@ export default function AddItemScreen() {
   const [category, setCategory] = useState('');
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const categories = ['Tops', 'Bottoms', 'Shoes'];
 
-  const handleSave = async () => {
+  useEffect(() => {
+    loadItem();
+  }, [id]);
+
+  const loadItem = async () => {
+    if (!user || !id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const items = await getUserItems(user.id);
+      const item = items.find(i => i.id === id);
+      
+      if (item) {
+        setItemName(item.name);
+        setCategory(item.category);
+        setColor(item.color || '');
+        setBrand(item.brand || '');
+        setExistingImageUrl(item.image_url || null);
+      } else {
+        showAlert('Item not found', 'Error');
+        router.back();
+      }
+    } catch (error) {
+      console.error('Error loading item:', error);
+      showAlert('Failed to load item', 'Error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdate = async () => {
     // Validate required fields
     if (!itemName.trim()) {
       showAlert('Please enter an item name', 'Validation Error');
@@ -52,28 +87,28 @@ export default function AddItemScreen() {
       return;
     }
 
-    if (!user) {
-      showAlert('You must be logged in to add items', 'Authentication Error');
+    if (!user || !id) {
+      showAlert('You must be logged in to update items', 'Authentication Error');
       return;
     }
 
     try {
       setIsUploading(true);
 
-      let imageUrl: string | undefined = undefined;
+      let imageUrl: string | undefined = existingImageUrl || undefined;
 
-      // Upload image if one was selected
+      // Upload new image if one was selected
       if (imageUri) {
         try {
           imageUrl = await uploadItemImage(user.id, imageUri);
         } catch (error) {
           console.error('Error uploading image:', error);
-          showAlert('Failed to upload image. Item will be saved without photo.', 'Upload Error');
+          showAlert('Failed to upload image. Item will be updated without new photo.', 'Upload Error');
         }
       }
 
-      // Save item to database
-      await createItem(user.id, {
+      // Update item in database
+      await updateItem(id as string, {
         name: itemName.trim(),
         category,
         color: color.trim() || undefined,
@@ -81,18 +116,49 @@ export default function AddItemScreen() {
         image_url: imageUrl,
       });
 
-      showAlert('Item added successfully!', 'Success');
+      showAlert('Item updated successfully!', 'Success');
       
       // Navigate back after a short delay
       setTimeout(() => {
         router.back();
       }, 1000);
     } catch (error) {
-      console.error('Error saving item:', error);
-      showAlert('Failed to save item. Please try again.', 'Error');
+      console.error('Error updating item:', error);
+      showAlert('Failed to update item. Please try again.', 'Error');
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Item',
+      'Are you sure you want to delete this item? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsUploading(true);
+              await deleteItem(id as string);
+              showAlert('Item deleted successfully!', 'Success');
+              setTimeout(() => {
+                router.back();
+              }, 500);
+            } catch (error) {
+              console.error('Error deleting item:', error);
+              showAlert('Failed to delete item. Please try again.', 'Error');
+              setIsUploading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const pickImage = async () => {
@@ -150,8 +216,8 @@ export default function AddItemScreen() {
 
   const showImageOptions = () => {
     Alert.alert(
-      'Add Photo',
-      'Choose a photo for your item',
+      'Change Photo',
+      'Choose a new photo for your item',
       [
         {
           text: 'Take Photo',
@@ -175,14 +241,29 @@ export default function AddItemScreen() {
     setShowCategoryMenu(false);
   };
 
+  const displayImageUri = imageUri || existingImageUrl;
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: themedColors.background }]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: themedColors.text }]}>Loading item...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themedColors.background }]}>
       <View style={[styles.header, { backgroundColor: themedColors.background, borderBottomColor: themedColors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back-ios" size={24} color={themedColors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: themedColors.text }]}>Add New Item</Text>
-        <View style={styles.placeholder} />
+        <Text style={[styles.headerTitle, { color: themedColors.text }]}>Edit Item</Text>
+        <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+          <MaterialIcons name="delete" size={24} color="#FF3B30" />
+        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView
@@ -198,8 +279,8 @@ export default function AddItemScreen() {
                 style={[styles.photoUpload, { backgroundColor: themedColors.card, borderColor: themedColors.border }]}
                 onPress={showImageOptions}
               >
-                {imageUri ? (
-                  <Image source={{ uri: imageUri }} style={styles.photoPreview} />
+                {displayImageUri ? (
+                  <Image source={{ uri: displayImageUri }} style={styles.photoPreview} />
                 ) : (
                   <>
                     <MaterialIcons name="add-a-photo" size={48} color={themedColors.textSecondary} />
@@ -328,13 +409,13 @@ export default function AddItemScreen() {
       <View style={[styles.footer, { backgroundColor: themedColors.background, borderTopColor: themedColors.border }]}>
         <TouchableOpacity
           style={[styles.saveButton, { backgroundColor: colors.primary, opacity: isUploading ? 0.6 : 1 }]}
-          onPress={handleSave}
+          onPress={handleUpdate}
           disabled={isUploading}
         >
           {isUploading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.saveButtonText}>Save Item</Text>
+            <Text style={styles.saveButtonText}>Update Item</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -347,6 +428,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+  },
   header: {
     paddingVertical: 16,
     paddingHorizontal: 16,
@@ -356,6 +446,10 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 40,
+  },
+  deleteButton: {
+    width: 40,
+    alignItems: 'flex-end',
   },
   headerTitle: {
     fontSize: 20,

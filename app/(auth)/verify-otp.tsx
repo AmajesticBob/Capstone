@@ -33,7 +33,7 @@ export default function VerifyOTPScreen() {
 
   const handleVerify = async () => {
     if (!otp || otp.length !== 6) {
-      setError('Please enter a valid 6-digit code');
+      setError('Please enter a valid 8-digit code');
       return;
     }
 
@@ -101,7 +101,7 @@ export default function VerifyOTPScreen() {
 
         <Text style={[styles.title, { color: themedColors.text }]}>Verify Your Email</Text>
         <Text style={[styles.subtitle, { color: themedColors.textSecondary }]}>
-          We've sent a 6-digit verification code to
+          We've sent a 8-digit verification code to
         </Text>
         <Text style={[styles.email, { color: themedColors.text }]}>{email}</Text>
 
@@ -126,12 +126,12 @@ export default function VerifyOTPScreen() {
           <View style={[styles.otpInputWrapper, { backgroundColor: themedColors.card, borderColor: themedColors.border }]}>
             <TextInput
               style={[styles.otpInput, { color: themedColors.text }]}
-              placeholder="000000"
+              placeholder="00000000"
               placeholderTextColor={themedColors.textSecondary}
               value={otp}
-              onChangeText={(text) => setOtp(text.replace(/[^0-9]/g, '').slice(0, 6))}
+              onChangeText={(text) => setOtp(text.replace(/[^0-9]/g, '').slice(0, 8))}
               keyboardType="number-pad"
-              maxLength={6}
+              maxLength={8}
               autoFocus
             />
           </View>
