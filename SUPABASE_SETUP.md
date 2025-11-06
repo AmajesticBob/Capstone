@@ -73,6 +73,10 @@ CREATE POLICY "Anyone can check username availability"
   USING (true);
 ```
 
+**Note:** If you already have the old "Service role can insert profiles" policy, you need to drop it first:
+```sql
+DROP POLICY IF EXISTS "Service role can insert profiles" ON public.profiles;
+```
 
 ### 3. Create Updated At Trigger
 
@@ -213,12 +217,12 @@ CREATE TRIGGER set_items_updated_at
   EXECUTE FUNCTION public.handle_updated_at();
 ```
 
-### 10. Set Up Storage Bucket for Item Images
+### 10. Set Up Storage Bucket for Item Images (Secure Configuration)
 
 In the Supabase Dashboard, go to Storage and create a new bucket:
 
 1. **Create Bucket**: Name it `item-images`
-2. **Make it Public**: Check "Public bucket" so images can be accessed via URL
+2. **Keep it Private**: **DO NOT** check "Public bucket" - we'll use signed URLs for security
 3. **Set up Storage Policies**:
 
 ```sql
@@ -228,11 +232,15 @@ ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'item-images' AND auth.uid()::text = (storage.foldername(name))[1]);
 
--- Policy: Anyone can view images
-CREATE POLICY "Anyone can view images"
+-- Policy: Users can view their own images
+-- This policy checks if the user's ID matches the first folder in the file path
+CREATE POLICY "Users can view their own images"
 ON storage.objects FOR SELECT
-TO public
-USING (bucket_id = 'item-images');
+TO authenticated
+USING (
+  bucket_id = 'item-images' AND
+  auth.uid()::text = (storage.foldername(name))[1]
+);
 
 -- Policy: Users can update their own images
 CREATE POLICY "Users can update own images"
@@ -247,5 +255,104 @@ TO authenticated
 USING (bucket_id = 'item-images' AND auth.uid()::text = (storage.foldername(name))[1]);
 ```
 
-Images will be organized in folders by user ID: `item-images/{user_id}/{filename}`
+**Note**: Images will be organized in folders by user ID: `item-images/{user_id}/{filename}`
 
+**Security Model**: 
+- The application stores file paths (e.g., `user-uuid/image.jpg`) in the database instead of public URLs
+- When displaying images, the app generates temporary signed URLs that are valid for 1 hour
+- Only authenticated users can view their own images, ensuring privacy and security
+
+## Migration: Converting Public Storage to Private Storage
+
+If you previously set up the storage bucket as public (following older instructions), you need to migrate to the secure private storage configuration:
+
+### Step 1: Make the Storage Bucket Private
+
+1. Go to your Supabase project dashboard
+2. Navigate to **Storage** from the sidebar
+3. Find the `item-images` bucket
+4. Click the options menu (three dots) next to the bucket name
+5. Select **Settings**
+6. **Uncheck** the "Public bucket" option
+7. Save the changes
+
+### Step 2: Update Storage Policies
+
+Run the following SQL commands in the Supabase SQL Editor:
+
+```sql
+-- Remove the old public policy that made all images accessible to everyone
+DROP POLICY IF EXISTS "Anyone can view images" ON storage.objects;
+
+-- Create a new policy that allows authenticated users to view only their own images
+-- This policy checks if the user's ID matches the first folder in the file path
+CREATE POLICY "Users can view their own images"
+ON storage.objects FOR SELECT
+TO authenticated
+USING (
+  bucket_id = 'item-images' AND
+  auth.uid()::text = (storage.foldername(name))[1]
+);
+```
+
+### What Changed in the Application Code
+
+The application code has been updated (in a separate commit) to:
+
+1. **Store file paths instead of public URLs**: When uploading an image, the app now stores the file path (e.g., `user-uuid/image.jpg`) in the database instead of a public URL.
+
+2. **Generate signed URLs on demand**: When displaying images, the app generates temporary signed URLs that are valid for 1 hour. This ensures that only authenticated users can view their own images.
+
+3. **Handle loading states**: The app now shows a loading spinner while fetching signed URLs for images.
+
+### Application Files That Were Modified
+
+The following application code files were modified to support private storage (changes made in a separate code commit):
+
+- `lib/items.ts`: Updated `uploadItemImage()` to return file path; added `getSignedImageUrl()` function
+- `app/(tabs)/index.tsx`: Updated to fetch and display images using signed URLs
+- `app/edit-item.tsx`: Updated to fetch and display images using signed URLs
+
+### Testing After Migration
+
+After running the SQL commands, test the following:
+
+1. **Upload a new item with an image** - Verify the image is displayed correctly
+2. **View existing items** - Verify all existing images are displayed with loading states
+3. **Edit an item** - Verify the image is loaded and displayed correctly
+4. **Try to access an image URL directly** - Verify you cannot access the image without authentication (should get a 403 error)
+
+### Rollback Instructions
+
+If you need to rollback these changes:
+
+1. Revert the code changes by checking out the previous commit
+2. Make the storage bucket public again in the Supabase dashboard
+3. Run this SQL command to restore the old policy:
+
+```sql
+DROP POLICY IF EXISTS "Users can view their own images" ON storage.objects;
+
+CREATE POLICY "Anyone can view images"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'item-images');
+```
+
+⚠️ **Warning**: After rollback:
+- Items uploaded under the private storage system will have file paths (e.g., `user-uuid/image.jpg`) stored in `image_url` rather than public URLs. You will need to either:
+  - Regenerate public URLs for these items in your application code, OR
+  - Update the `image_url` field in the database for affected items
+- Items originally uploaded under the public storage system will continue to work as they already have public URLs stored.
+- Switching between storage systems requires careful data migration planning to avoid broken image links.
+
+## Troubleshooting
+
+- **RLS Errors**: Make sure RLS policies are correctly set up
+- **Email Not Received**: Check Supabase Auth settings and spam folder
+- **Username Already Exists**: The app checks for username availability before signup
+- **Profile Not Created**: Check if the trigger and policies are correctly set up
+- **Account Deletion Issues**: Ensure the `delete_user_account()` function is created with `SECURITY DEFINER`
+- **Image Upload Issues**: Make sure the `item-images` bucket is created and policies are correctly set up
+- **Items Not Showing**: Verify RLS policies on items table and that items are associated with the correct user_id
+- **Images Not Loading**: If using the private storage configuration, ensure signed URLs are being generated correctly

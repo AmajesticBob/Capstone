@@ -8,6 +8,7 @@ import {
   Image,
   RefreshControl,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -15,7 +16,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../ThemeContext';
 import { colors, getThemedColors } from '../../theme';
 import { useAuth } from '../../contexts/AuthContext';
-import { getUserItems } from '../../lib/items';
+import { getUserItems, getSignedImageUrl } from '../../lib/items';
 import { Item } from '../../types/items';
 
 const { width } = Dimensions.get('window');
@@ -32,6 +33,7 @@ export default function ClosetScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   const categories = ['All', 'Tops', 'Bottoms', 'Shoes'];
 
@@ -49,6 +51,19 @@ export default function ClosetScreen() {
       const userItems = await getUserItems(user.id);
       setItems(userItems);
       setHasLoadedOnce(true);
+
+      // Generate signed URLs for all items with images
+      const urls: Record<string, string> = {};
+      const urlPromises = userItems
+        .filter(item => item.image_url)
+        .map(async (item) => {
+          const signedUrl = await getSignedImageUrl(item.image_url!);
+          if (signedUrl) {
+            urls[item.id] = signedUrl;
+          }
+        });
+      await Promise.all(urlPromises);
+      setSignedUrls(urls);
     } catch (error) {
       console.error('Error loading items:', error);
     } finally {
@@ -73,35 +88,55 @@ export default function ClosetScreen() {
     loadItems();
   };
 
-  const renderItem = (item: Item) => (
-    <TouchableOpacity 
-      key={item.id} 
-      style={[styles.itemCard, { backgroundColor: themedColors.card }]}
-      onPress={() => router.push(`/edit-item?id=${item.id}`)}
-      activeOpacity={0.7}
-    >
-      {item.image_url ? (
-        <Image source={{ uri: item.image_url }} style={styles.itemImage} />
-      ) : (
+  const renderItemImage = (item: Item, imageUrl: string | null) => {
+    if (imageUrl) {
+      return <Image source={{ uri: imageUrl }} style={styles.itemImage} />;
+    }
+    
+    if (item.image_url) {
+      // Image exists but signed URL is still loading
+      return (
         <View style={[styles.itemImagePlaceholder, { backgroundColor: themedColors.input }]}>
-          <MaterialIcons name="checkroom" size={48} color={themedColors.textSecondary} />
+          <ActivityIndicator size="small" color={themedColors.textSecondary} />
         </View>
-      )}
-      <View style={styles.itemInfo}>
-        <Text style={[styles.itemName, { color: themedColors.text }]} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text style={[styles.itemCategory, { color: themedColors.textSecondary }]}>
-          {item.category}
-        </Text>
-        {item.color && (
-          <Text style={[styles.itemDetail, { color: themedColors.textSecondary }]} numberOfLines={1}>
-            {item.color}
-          </Text>
-        )}
+      );
+    }
+    
+    // No image for this item
+    return (
+      <View style={[styles.itemImagePlaceholder, { backgroundColor: themedColors.input }]}>
+        <MaterialIcons name="checkroom" size={48} color={themedColors.textSecondary} />
       </View>
-    </TouchableOpacity>
-  );
+    );
+  };
+
+  const renderItem = (item: Item) => {
+    const imageUrl = item.image_url ? signedUrls[item.id] : null;
+    
+    return (
+      <TouchableOpacity 
+        key={item.id} 
+        style={[styles.itemCard, { backgroundColor: themedColors.card }]}
+        onPress={() => router.push(`/edit-item?id=${item.id}`)}
+        activeOpacity={0.7}
+      >
+        {renderItemImage(item, imageUrl)}
+        <View style={styles.itemInfo}>
+          <Text style={[styles.itemName, { color: themedColors.text }]} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={[styles.itemCategory, { color: themedColors.textSecondary }]}>
+            {item.category}
+          </Text>
+          {item.color && (
+            <Text style={[styles.itemDetail, { color: themedColors.textSecondary }]} numberOfLines={1}>
+              {item.color}
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themedColors.background }]}>

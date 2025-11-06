@@ -5,7 +5,7 @@ import { Item, CreateItemInput } from '../types/items';
  * Upload an image to Supabase Storage
  * @param userId - The user's ID
  * @param uri - The local URI of the image
- * @returns The public URL of the uploaded image
+ * @returns The file path of the uploaded image
  */
 export async function uploadItemImage(userId: string, uri: string): Promise<string> {
   try {
@@ -32,15 +32,38 @@ export async function uploadItemImage(userId: string, uri: string): Promise<stri
       throw error;
     }
 
-    // Get the public URL
-    const { data: urlData } = supabase.storage
-      .from('item-images')
-      .getPublicUrl(filePath);
-
-    return urlData.publicUrl;
+    // Return the file path instead of public URL
+    return data.path;
   } catch (error) {
     console.error('Error in uploadItemImage:', error);
     throw error;
+  }
+}
+
+/**
+ * Get a signed URL for viewing a private image
+ * @param imagePath - The file path in storage (e.g., 'user-uuid/image.jpg')
+ * @returns A temporary signed URL for viewing the image
+ */
+export async function getSignedImageUrl(imagePath: string): Promise<string | null> {
+  try {
+    if (!imagePath) {
+      return null;
+    }
+
+    const { data, error } = await supabase.storage
+      .from('item-images')
+      .createSignedUrl(imagePath, 3600); // URL valid for 1 hour
+
+    if (error) {
+      console.error('Error creating signed URL:', error);
+      return null;
+    }
+
+    return data.signedUrl;
+  } catch (error) {
+    console.error('Error in getSignedImageUrl:', error);
+    return null;
   }
 }
 

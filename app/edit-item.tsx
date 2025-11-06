@@ -23,7 +23,7 @@ import { GlassView } from 'expo-glass-effect';
 import { useAlert } from '../components/Alert';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../contexts/AuthContext';
-import { uploadItemImage, updateItem, deleteItem, getUserItems } from '../lib/items';
+import { uploadItemImage, updateItem, deleteItem, getUserItems, getSignedImageUrl } from '../lib/items';
 
 export default function EditItemScreen() {
   const router = useRouter();
@@ -39,6 +39,7 @@ export default function EditItemScreen() {
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -64,6 +65,12 @@ export default function EditItemScreen() {
         setColor(item.color || '');
         setBrand(item.brand || '');
         setExistingImageUrl(item.image_url || null);
+
+        // Get signed URL for existing image
+        if (item.image_url) {
+          const signedUrl = await getSignedImageUrl(item.image_url);
+          setSignedImageUrl(signedUrl);
+        }
       } else {
         showAlert('Item not found', 'Error');
         router.back();
@@ -241,7 +248,7 @@ export default function EditItemScreen() {
     setShowCategoryMenu(false);
   };
 
-  const displayImageUri = imageUri || existingImageUrl;
+  const displayImageUri = imageUri || signedImageUrl;
 
   if (loading) {
     return (
