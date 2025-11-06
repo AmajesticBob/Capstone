@@ -150,3 +150,115 @@ After setting up the database:
 6. Test username availability checking during signup
 7. Test profile updates and password changes
 8. Test account deletion (verify user is removed from both profiles and auth.users tables)
+9. Test adding items to the closet (verify items are saved in the `items` table)
+10. Test image upload (verify images are stored in the `item-images` bucket)
+11. Verify items are displayed only for the logged-in user
+
+## 7. Create Items Table (for Closet Feature)
+
+```sql
+-- Create items table
+CREATE TABLE IF NOT EXISTS public.items (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  color TEXT,
+  brand TEXT,
+  image_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Add indexes for performance
+CREATE INDEX IF NOT EXISTS items_user_id_idx ON public.items(user_id);
+CREATE INDEX IF NOT EXISTS items_category_idx ON public.items(category);
+CREATE INDEX IF NOT EXISTS items_created_at_idx ON public.items(created_at DESC);
+```
+
+### 8. Enable Row Level Security on Items Table
+
+```sql
+-- Enable RLS on items table
+ALTER TABLE public.items ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can view their own items
+CREATE POLICY "Users can view own items" 
+  ON public.items 
+  FOR SELECT 
+  USING (auth.uid() = user_id);
+
+-- Policy: Users can insert their own items
+CREATE POLICY "Users can insert own items"
+  ON public.items
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Policy: Users can update their own items
+CREATE POLICY "Users can update own items" 
+  ON public.items 
+  FOR UPDATE 
+  USING (auth.uid() = user_id);
+
+-- Policy: Users can delete their own items
+CREATE POLICY "Users can delete own items"
+  ON public.items
+  FOR DELETE
+  USING (auth.uid() = user_id);
+```
+
+### 9. Create Updated At Trigger for Items
+
+```sql
+-- Create trigger for items table
+CREATE TRIGGER set_items_updated_at
+  BEFORE UPDATE ON public.items
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+```
+
+### 10. Set Up Storage Bucket for Item Images
+
+In the Supabase Dashboard, go to Storage and create a new bucket:
+
+1. **Create Bucket**: Name it `item-images`
+2. **Make it Public**: Check "Public bucket" so images can be accessed via URL
+3. **Set up Storage Policies**:
+
+```sql
+-- Policy: Users can upload their own images
+CREATE POLICY "Users can upload own images"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'item-images' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- Policy: Anyone can view images
+CREATE POLICY "Anyone can view images"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'item-images');
+
+-- Policy: Users can update their own images
+CREATE POLICY "Users can update own images"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id = 'item-images' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- Policy: Users can delete their own images
+CREATE POLICY "Users can delete own images"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'item-images' AND auth.uid()::text = (storage.foldername(name))[1]);
+```
+
+**Note**: Images will be organized in folders by user ID: `item-images/{user_id}/{filename}`
+
+## Troubleshooting
+
+- **RLS Errors**: Make sure RLS policies are correctly set up
+- **Email Not Received**: Check Supabase Auth settings and spam folder
+- **Username Already Exists**: The app checks for username availability before signup
+- **Profile Not Created**: Check if the trigger and policies are correctly set up
+- **Account Deletion Issues**: Ensure the `delete_user_account()` function is created with `SECURITY DEFINER`
+- **Image Upload Issues**: Make sure the `item-images` bucket is created and set to public
+- **Items Not Showing**: Verify RLS policies on items table and that items are associated with the correct user_id
