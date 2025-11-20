@@ -158,13 +158,10 @@ export async function generateVirtualTryOn(
     console.log('Initializing GoogleGenAI with API key:', API_KEY ? 'Present' : 'Missing');
     const ai = new GoogleGenAI({ apiKey: API_KEY });
 
-    // Convert images to base64
     const modelBase64 = await imageUriToBase64(modelImageUri);
     
-    // Build the prompt array with images
     const promptParts: any[] = [];
     
-    // Add clothing items first (they will be worn by the model)
     if (topImageUri) {
       const topBase64 = await imageUriToBase64(topImageUri);
       promptParts.push({
@@ -210,7 +207,6 @@ export async function generateVirtualTryOn(
     if (shoeImageUri) clothingItems.push('shoes');
     const clothingList = clothingItems.join(', ');
 
-    // Add text prompt
     promptParts.push({
       text: `Create a professional fashion photo. Take the ${clothingList} from the first ${clothingItems.length} image(s) and let the person from the last image wear them. Generate a realistic, full-body shot of the person wearing these clothing items, with natural lighting and shadows. The photo should look like a professional fashion e-commerce shot with the person modeling the outfit in a neutral or complementary background.`
     });
@@ -227,8 +223,6 @@ export async function generateVirtualTryOn(
     let generatedImageData: string | undefined;
     let descriptionText = '';
 
-    // Extract both image and text from response
-    // Response structure: response.candidates[0].content.parts
     let parts: any[] | undefined;
     
     if (response && response.candidates && response.candidates[0]) {
@@ -242,7 +236,6 @@ export async function generateVirtualTryOn(
         parts = candidate.content;
       }
     } else if (response && (response as any).parts) {
-      // Fallback to direct parts access
       parts = (response as any).parts;
     }
 
@@ -255,7 +248,6 @@ export async function generateVirtualTryOn(
           descriptionText += part.text;
           console.log('Found text:', part.text);
         }
-        // Check for different possible image data properties
         if (part.inlineData) {
           generatedImageData = part.inlineData.data;
           console.log('Found image data via inlineData, length:', generatedImageData?.length);
