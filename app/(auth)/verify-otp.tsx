@@ -32,7 +32,7 @@ export default function VerifyOTPScreen() {
   const [success, setSuccess] = useState('');
 
   const handleVerify = async () => {
-    if (!otp || otp.length !== 6) {
+    if (!otp || otp.length !== 8) {
       setError('Please enter a valid 8-digit code');
       return;
     }

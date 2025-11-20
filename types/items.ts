@@ -5,6 +5,7 @@ export interface Item {
   category: string;
   color?: string;
   brand?: string;
+  description?: string;
   image_url?: string;
   created_at: string;
   updated_at: string;
@@ -15,5 +16,6 @@ export interface CreateItemInput {
   category: string;
   color?: string;
   brand?: string;
+  description?: string;
   image_url?: string;
 }

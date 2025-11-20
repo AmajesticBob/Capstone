@@ -7,11 +7,12 @@ A React Native mobile application for managing your wardrobe, planning outfits, 
 - **User Authentication**: Secure sign-up and login with email verification
 - **My Closet**: Browse and manage your clothing items with photo uploads
   - Add items with photos from camera or gallery
+  - **AI-Powered Generation**: Automatically generate item details (name, category, color, description) using Google Gemini
   - Categorize items (Tops, Bottoms, Shoes)
   - Filter items by category with tab navigation
   - Edit items by tapping on them
   - Delete items with confirmation
-  - Add color and brand information
+  - Add color, brand, and description information
   - View items in a responsive grid with image previews
   - Pull-to-refresh to sync latest items
 - **Planner**: Get smart color suggestions based on selected items
@@ -24,6 +25,7 @@ A React Native mobile application for managing your wardrobe, planning outfits, 
 - React Native with Expo
 - **Expo Router** with file-based routing
 - **Supabase** for authentication, database, and storage
+- **Google Gemini AI** for automatic item classification
 - **Expo Image Picker** for photo uploads
 - **Native Tabs** with iOS liquid glass blur effect
 - Expo Vector Icons
@@ -41,11 +43,15 @@ npm install
 2. Set up Supabase:
    - Create a Supabase project at https://supabase.com
    - Follow the instructions in `SUPABASE_SETUP.md` to set up the database schema
+   - Run the migration in `DATABASE_MIGRATION_DESCRIPTION.md` to add the description field
    - Create a `.env` file in the project root:
    ```
    EXPO_PUBLIC_SUPABASE_URL=your-supabase-project-url
    EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   EXPO_PUBLIC_GEMINI_API_KEY=your-gemini-api-key
    ```
+
+   **Note**: Get a free Gemini API key at https://makersuite.google.com/app/apikey
 
 3. Start the development server:
 ```bash
@@ -135,6 +141,7 @@ The app uses Supabase with the following schema:
 - `category` (TEXT, required)
 - `color` (TEXT, optional)
 - `brand` (TEXT, optional)
+- `description` (TEXT, optional)
 - `image_url` (TEXT, optional)
 - `created_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
@@ -159,9 +166,12 @@ See `SUPABASE_SETUP.md` for complete setup instructions.
 2. User can filter items by category (All, Tops, Bottoms, Shoes)
 3. User taps "Add Item" button to add new items
 4. User selects or takes a photo of the clothing item
-5. User fills in item details (name, category, color, brand)
-6. Photo is uploaded to Supabase Storage
-7. Item data is saved to database with user_id
+5. User can either:
+   - **Manually fill** in item details (name, category, color, brand, description), OR
+   - Click **"Generate with AI"** to automatically fill all fields using Google Gemini
+6. User can edit any auto-generated fields as needed
+7. Photo is uploaded to Supabase Storage
+8. Item data is saved to database with user_id
 8. User is redirected back to closet
 9. Item appears in the closet grid with image preview
 10. User can tap any item to edit its details or delete it
@@ -196,9 +206,14 @@ Required environment variables (create a `.env` file):
 ```
 EXPO_PUBLIC_SUPABASE_URL=your-supabase-project-url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+EXPO_PUBLIC_GEMINI_API_KEY=your-gemini-api-key
 ```
 
 See `.env.example` for reference.
+
+## AI Generation Feature
+
+The app includes AI-powered item classification using Google Gemini. For detailed information about setting up and using this feature, see `AI_GENERATION_FEATURE.md`.
 
 ## Troubleshooting
 

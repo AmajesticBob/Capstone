@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { useAlert } from '../components/Alert';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { uploadItemImage, updateItem, deleteItem, getUserItems, getSignedImageUrl } from '../lib/items';
+import { generateItemClassification } from '../lib/gemini';
 
 export default function EditItemScreen() {
   const router = useRouter();
@@ -36,12 +37,16 @@ export default function EditItemScreen() {
   const [color, setColor] = useState('');
   const [brand, setBrand] = useState('');
   const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const categories = ['Tops', 'Bottoms', 'Shoes'];
 
@@ -64,6 +69,7 @@ export default function EditItemScreen() {
         setCategory(item.category);
         setColor(item.color || '');
         setBrand(item.brand || '');
+        setDescription(item.description || '');
         setExistingImageUrl(item.image_url || null);
 
         // Get signed URL for existing image
@@ -120,6 +126,7 @@ export default function EditItemScreen() {
         category,
         color: color.trim() || undefined,
         brand: brand.trim() || undefined,
+        description: description.trim() || undefined,
         image_url: imageUrl,
       });
 
@@ -248,6 +255,49 @@ export default function EditItemScreen() {
     setShowCategoryMenu(false);
   };
 
+  const handleGenerateWithAI = async () => {
+    // Check if image is uploaded
+    if (!imageUri && !signedImageUrl) {
+      showAlert('Please upload a photo first to use Auto Fill', 'Photo Required');
+      return;
+    }
+
+    try {
+      setIsGenerating(true);
+      
+      // Clear existing fields first
+      setItemName('');
+      setCategory('');
+      setColor('');
+      setDescription('');
+      
+      // Use the current image (new upload or existing)
+      const imageToUse = imageUri || signedImageUrl;
+      if (!imageToUse) {
+        throw new Error('No image available');
+      }
+      
+      // Generate classification using AI with image
+      const classification = await generateItemClassification(imageToUse);
+      
+      // Fill the form fields with generated data
+      setItemName(classification.name);
+      setCategory(classification.category);
+      setColor(classification.color);
+      setDescription(classification.description);
+      
+      showAlert('Item details generated successfully!', 'Success');
+    } catch (error) {
+      console.error('Error generating with AI:', error);
+      showAlert(
+        error instanceof Error ? error.message : 'Failed to generate item details. Please try again.',
+        'Error'
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const displayImageUri = imageUri || signedImageUrl;
 
   if (loading) {
@@ -275,10 +325,17 @@ export default function EditItemScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={80}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        enabled
       >
-        <ScrollView style={styles.content}>
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.content}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.form}>
             <View style={styles.formGroup}>
               <Text style={[styles.label, { color: themedColors.text }]}>Photo</Text>
@@ -306,6 +363,11 @@ export default function EditItemScreen() {
                 placeholderTextColor={themedColors.textSecondary}
                 value={itemName}
                 onChangeText={setItemName}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({ y: 150, animated: true });
+                  }, 300);
+                }}
               />
             </View>
 
@@ -322,6 +384,42 @@ export default function EditItemScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* AI Generation Button */}
+            <View style={styles.formGroup}>
+              <TouchableOpacity
+                style={[styles.aiButton, { backgroundColor: colors.primary, opacity: isGenerating ? 0.6 : 1 }]}
+                onPress={handleGenerateWithAI}
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <>
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <Text style={styles.aiButtonText}>Generating...</Text>
+                  </>
+                ) : (
+                  <Text style={styles.aiButtonText}>Auto Fill</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={[styles.label, { color: themedColors.text }]}>Description</Text>
+              <TextInput
+                style={[styles.input, styles.textArea, { backgroundColor: themedColors.input, color: themedColors.text }]}
+                placeholder="e.g., Comfortable casual jeans perfect for everyday wear"
+                placeholderTextColor={themedColors.textSecondary}
+                value={description}
+                onChangeText={setDescription}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({ y: 500, animated: true });
+                  }, 300);
+                }}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
             <View style={styles.row}>
               <View style={[styles.formGroup, styles.halfWidth]}>
                 <Text style={[styles.label, { color: themedColors.text }]}>Color</Text>
@@ -331,6 +429,11 @@ export default function EditItemScreen() {
                   placeholderTextColor={themedColors.textSecondary}
                   value={color}
                   onChangeText={setColor}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({ y: 550, animated: true });
+                    }, 300);
+                  }}
                 />
               </View>
 
@@ -342,6 +445,11 @@ export default function EditItemScreen() {
                   placeholderTextColor={themedColors.textSecondary}
                   value={brand}
                   onChangeText={setBrand}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({ y: 550, animated: true });
+                    }, 300);
+                  }}
                 />
               </View>
             </View>
@@ -471,6 +579,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
   },
+  scrollContent: {
+    paddingBottom: 150,
+  },
   form: {
     paddingTop: 24,
     paddingBottom: 24,
@@ -509,6 +620,25 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     fontSize: 16,
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  aiButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  aiButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   pickerContainer: {
     borderRadius: 12,
