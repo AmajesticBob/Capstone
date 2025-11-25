@@ -138,7 +138,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Failed to fetch/create profile:', error);
-      // Set profile to null on error so app can still function
+      // If the user is deleted from DB but token remains, force logout
+      if (error?.message?.includes('User from sub claim in JWT does not exist') || 
+          error?.message?.includes('AuthApiError')) {
+        console.log('User no longer exists. Cleaning up session...');
+        await signOut();
+        setUser(null);
+        setSession(null);
+        return;
+      }
       setProfile(null);
     } finally {
       setLoading(false);
