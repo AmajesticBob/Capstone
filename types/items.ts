@@ -18,4 +18,5 @@ export interface CreateItemInput {
   brand?: string;
   description?: string;
   image_url?: string;
+  storage_path?: string;
 }
