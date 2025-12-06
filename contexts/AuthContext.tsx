@@ -18,13 +18,15 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   verifyOTP: (email: string, token: string) => Promise<any>;
-  resendOTP: (email: string) => Promise<any>;
+  resendOTP: (email: string, type?: 'signup' | 'recovery') => Promise<any>;
   checkUsernameAvailability: (username: string) => Promise<boolean>;
   checkEmailAvailability: (email: string) => Promise<boolean>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  resetPassword: (email: string) => Promise<any>;
+  verifyOTPForPasswordReset: (email: string, token: string, newPassword: string) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -138,15 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Failed to fetch/create profile:', error);
-      // If the user is deleted from DB but token remains, force logout
-      if (error?.message?.includes('User from sub claim in JWT does not exist') || 
-          error?.message?.includes('AuthApiError')) {
-        console.log('User no longer exists. Cleaning up session...');
-        await signOut();
-        setUser(null);
-        setSession(null);
-        return;
-      }
+      // Set profile to null on error so app can still function
       setProfile(null);
     } finally {
       setLoading(false);
@@ -243,10 +237,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const resendOTP = async (email: string) => {
+  const resendOTP = async (email: string, type: 'signup' | 'recovery' = 'signup') => {
     try {
       const { data, error } = await supabase.auth.resend({
-        type: 'signup',
+        type,
         email,
       });
 
@@ -362,6 +356,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: undefined,
+      });
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to send reset code';
+      return { data: null, error: new Error(message) };
+    }
+  };
+
+  const verifyOTPForPasswordReset = async (email: string, token: string, newPassword: string) => {
+    try {
+      // First verify the OTP
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'recovery',
+      });
+
+      if (error) throw error;
+
+      // After OTP verification, update the password
+      if (data.session) {
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: newPassword,
+        });
+
+        if (updateError) throw updateError;
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to verify code or update password';
+      return { data: null, error: new Error(message) };
+    }
+  };
+
   const value = {
     session,
     user,
@@ -378,6 +413,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     changePassword,
     deleteAccount,
     refreshProfile,
+    resetPassword,
+    verifyOTPForPasswordReset,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
