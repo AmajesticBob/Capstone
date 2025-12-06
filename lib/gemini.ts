@@ -8,6 +8,7 @@ export interface ItemClassification {
   name: string;
   category: string;
   color: string;
+  colorHex: string;
   description: string;
 }
 
@@ -67,12 +68,13 @@ export async function generateItemClassification(
       "name": "descriptive name for the item",
       "category": "one of: Tops, Bottoms, or Shoes",
       "color": "primary color of the item",
+      "colorHex": "hex code for the primary color (e.g., #FF5733)",
       "description": "short description of the item (1-2 sentences)"
     }
   ]
 }
 
-Important: Category MUST be exactly one of: Tops, Bottoms, or Shoes. Analyze the image carefully to determine the correct category, color, and provide an accurate description.`;
+Important: Category MUST be exactly one of: Tops, Bottoms, or Shoes. Analyze the image carefully to determine the correct category, color, colorHex (in hex format like #RRGGBB), and provide an accurate description.`;
 
     const result = await model.generateContent([
       prompt,
@@ -120,6 +122,7 @@ Important: Category MUST be exactly one of: Tops, Bottoms, or Shoes. Analyze the
       name: classification.name || '',
       category: category,
       color: classification.color || '',
+      colorHex: classification.colorHex || '#000000',
       description: classification.description || '',
     };
   } catch (error) {

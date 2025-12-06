@@ -16,7 +16,7 @@ export default function Index() {
     if (!user && !inAuthGroup) {
       // Redirect to login if not authenticated
       router.replace('/(auth)/login');
-    } else if (user && inAuthGroup) {
+    } else if (user) {
       // Redirect to main app if authenticated
       router.replace('/(tabs)');
     }
