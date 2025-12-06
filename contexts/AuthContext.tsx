@@ -239,8 +239,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resendOTP = async (email: string, type: 'signup' | 'recovery' = 'signup') => {
     try {
+      if (type === 'recovery') {
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: undefined,
+        });
+        if (error) throw error;
+        return { data, error: null };
+      }
+
       const { data, error } = await supabase.auth.resend({
-        type,
+        type: 'signup',
         email,
       });
 
