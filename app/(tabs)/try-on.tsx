@@ -88,7 +88,7 @@ export default function TryOnScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: false,
         quality: 0.8,
       });
@@ -189,7 +189,6 @@ export default function TryOnScreen() {
       } else {
         console.warn('No image data in response');
       }
-      showAlert('Virtual try-on generated successfully!', 'Success');
     } catch (error) {
       console.error('Error generating try-on:', error);
       showAlert(
@@ -371,23 +370,6 @@ export default function TryOnScreen() {
                 </TouchableOpacity>
               )}
             </View>
-
-            {/* Result Description */}
-            {result && (
-              <View style={[styles.resultBox, { backgroundColor: themedColors.card }]}>
-                <View style={styles.resultHeader}>
-                  <MaterialCommunityIcons name="star-circle" size={20} color={colors.primary} />
-                  <Text style={[styles.resultTitle, { color: themedColors.text }]}>
-                    AI Visualization
-                  </Text>
-                </View>
-                <ScrollView style={styles.resultScroll} nestedScrollEnabled>
-                  <Text style={[styles.resultText, { color: themedColors.text }]}>
-                    {result}
-                  </Text>
-                </ScrollView>
-              </View>
-            )}
           </View>
 
           {/* Item Selection Area - Right Side */}

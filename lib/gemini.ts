@@ -270,7 +270,7 @@ export async function generateVirtualTryOn(
     console.log('Description:', descriptionText);
 
     return {
-      description: descriptionText || 'Virtual try-on image generated successfully!',
+      description: descriptionText || '',
       imageData: generatedImageData,
     };
   } catch (error) {
