@@ -158,7 +158,6 @@ export async function generateVirtualTryOn(
   }
 
   try {
-    console.log('Initializing GoogleGenAI with API key:', API_KEY ? 'Present' : 'Missing');
     const ai = new GoogleGenAI({ apiKey: API_KEY });
 
     const modelBase64 = await imageUriToBase64(modelImageUri);
