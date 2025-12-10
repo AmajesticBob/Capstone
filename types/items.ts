@@ -4,6 +4,7 @@ export interface Item {
   name: string;
   category: string;
   color?: string;
+  color_hex?: string;
   brand?: string;
   description?: string;
   image_url?: string;
@@ -15,6 +16,7 @@ export interface CreateItemInput {
   name: string;
   category: string;
   color?: string;
+  color_hex?: string;
   brand?: string;
   description?: string;
   image_url?: string;

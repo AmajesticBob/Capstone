@@ -164,7 +164,9 @@ CREATE TABLE IF NOT EXISTS public.items (
   name TEXT NOT NULL,
   category TEXT NOT NULL,
   color TEXT,
+  color_hex TEXT,
   brand TEXT,
+  description TEXT,
   image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
