@@ -175,8 +175,8 @@ export default function TryOnScreen() {
         bottomImageUrl,
         shoeImageUrl
       );
-
-      console.log('Try-on result:', tryOnResult);
+      // output from this one is long as hell
+      // console.log('Try-on result:', tryOnResult);
       console.log('Has image data:', !!tryOnResult.imageData);
       console.log('Image data length:', tryOnResult.imageData?.length);
 
@@ -488,6 +488,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    marginBottom: 50
   },
   mainContent: {
     flexDirection: width > 768 ? 'row' : 'column',
@@ -535,7 +536,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    backdropFilter: 'blur(10px)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -545,7 +545,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    backdropFilter: 'blur(10px)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -566,7 +565,6 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    backdropFilter: 'blur(10px)',
     justifyContent: 'center',
     alignItems: 'center',
   },

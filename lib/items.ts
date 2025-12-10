@@ -46,17 +46,20 @@ export async function uploadItemImage(userId: string, uri: string): Promise<stri
 /**
  * Get a signed URL for viewing a private image
  * @param imagePath - The file path in storage (e.g., 'user-uuid/image.jpg')
+ * @param bucket - The storage bucket (defaults to 'item-images')
  * @returns A temporary signed URL for viewing the image
  */
-export async function getSignedImageUrl(imagePath: string): Promise<string | null> {
+export async function getSignedImageUrl(
+  imagePath: string, 
+  bucket: string = 'item-images' // default, so the function works normally wherever else it's implemented
+): Promise<string | null> {
   try {
     if (!imagePath) {
       return null;
     }
-
     const { data, error } = await supabase.storage
-      .from('item-images')
-      .createSignedUrl(imagePath, 3600); // URL valid for 1 hour
+      .from(bucket)
+      .createSignedUrl(imagePath, 3600); // URL is valid for 1 hour
 
     if (error) {
       console.error('Error creating signed URL:', error);
@@ -231,13 +234,15 @@ export async function searchSimilarItems(
   query: {
     queryText?: string;
     queryImagePath?: string;
-  }
+  },
+  categoryFilter?: string
 ): Promise<Item[]> {
   try {
     let queryImageUrl: string | undefined = undefined;
 
     if (query.queryImagePath) {
-      const signedUrl = await getSignedImageUrl(query.queryImagePath);
+      const bucket = query.queryImagePath.includes('-temp') ? 'temp-images' : 'item-images';
+      const signedUrl = await getSignedImageUrl(query.queryImagePath, bucket);
       if (!signedUrl) {
         throw new Error('Could not get signed URL for query image');
       }
@@ -254,6 +259,7 @@ export async function searchSimilarItems(
         query_image_url: queryImageUrl,
         query_text: query.queryText,
         limit: 10,
+        category: categoryFilter,
       }),
     });
 
@@ -281,3 +287,43 @@ export async function searchSimilarItems(
     throw error;
   }
 }
+
+// The below functions are specifically part of the inspiraation matching feature
+
+/**
+ * Upload a temporary image for inspiration
+ * @param userId 
+ * @param uri 
+ */
+export async function uploadTempImage(userId: string, uri: string): Promise<string> {
+    try {
+      const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `${Date.now()}-temp.${fileExt}`;
+      const filePath = `${userId}/${fileName}`;
+  
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const arrayBuffer = await new Response(blob).arrayBuffer();
+  
+      const { data, error } = await supabase.storage
+        .from('temp-images')
+        .upload(filePath, arrayBuffer, {
+          contentType: `image/${fileExt}`,
+          upsert: false,
+        });
+  
+      if (error) throw error;
+      return data.path;
+    } catch (error) {
+      console.error('Error in uploadTempImage:', error);
+      throw error;
+    }
+  }
+
+  /**
+  * Delete a file from storage, so that we don't hold the image forever
+  */
+  export async function deleteFromStorage(bucket: string, path: string) {
+    const { error } = await supabase.storage.from(bucket).remove([path]);
+    if (error) console.error('Error cleaning up temp file:', error);
+  }
