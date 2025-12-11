@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   aiGenButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     backdropFilter: 'blur(10px)',
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
   shuffleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     backdropFilter: 'blur(10px)',
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     backdropFilter: 'blur(10px)',
     justifyContent: 'center',
     alignItems: 'center',
