@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Alert,
   Dimensions,
   FlatList,
+  Platform,
+  Share
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
@@ -17,11 +19,15 @@ import { useTheme } from '../../ThemeContext';
 import { colors, getThemedColors } from '../../theme';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../contexts/AuthContext';
-import { getUserItems, getSignedImageUrl } from '../../lib/items';
+import { getUserItems, getSignedImageUrl, getItemById, createSharedOutfit, getSharedOutfitById } from '../../lib/items';
 import { generateVirtualTryOn } from '../../lib/gemini';
 import { Item } from '../../types/items';
 import { useAlert } from '../../components/Alert';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as Linking from 'expo-linking';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,6 +36,9 @@ export default function TryOnScreen() {
   const themedColors = getThemedColors(isDark);
   const { user } = useAuth();
   const { showAlert, AlertComponent } = useAlert();
+  const params = useLocalSearchParams();
+
+  const [isSharing, setIsSharing] = useState(false);
   
   const [modelImage, setModelImage] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -41,6 +50,63 @@ export default function TryOnScreen() {
   const [result, setResult] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // --- NEW LOGIC TO HANDLE INCOMING DEEP LINK ---
+  const loadSharedOutfit = useCallback(async () => {
+    // Check for the new shared outfit ID in the parameters
+    const outfitId = params.outfitId; 
+    
+    if (!outfitId || typeof outfitId !== 'string') {
+      // No shared link parameters found, skip shared load
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 1. Fetch the public recipe using the shared outfit ID
+      const recipe = await getSharedOutfitById(outfitId);
+      
+      if (!recipe) {
+        showAlert('Shared outfit recipe not found or deleted.', 'Error');
+        return;
+      }
+
+      const { top_id, bottom_id, shoe_id } = recipe;
+
+      // 2. Compile list of valid item IDs from the recipe
+      const itemIds = [top_id, bottom_id, shoe_id].filter(id => id) as string[];
+      
+      // 3. Fetch details for all required items concurrently
+      // NOTE: RLS still blocks fetching the full item if the sharer owns it, 
+      // but we need these IDs for the next step (Saving/Matching).
+      // For now, we fetch the item details IF they exist in the user's closet.
+      const itemPromises = itemIds.map(id => getItemById(id));
+      const fetchedItems = await Promise.all(itemPromises);
+
+      // 4. Set the selected items (if they exist in the current user's closet)
+      const topItem = fetchedItems.find(item => item?.id === top_id) || null;
+      const bottomItem = fetchedItems.find(item => item?.id === bottom_id) || null;
+      const shoeItem = fetchedItems.find(item => item?.id === shoe_id) || null;
+
+      if (topItem) setSelectedTop(topItem);
+      if (bottomItem) setSelectedBottom(bottomItem);
+      if (shoeItem) setSelectedShoe(shoeItem);
+      
+      showAlert('Outfit Loaded!', 'Shared look ready for try-on or saving.');
+
+    } catch (error) {
+      console.error('Error loading shared outfit:', error);
+      showAlert('Could not load shared outfit details.', 'Error');
+    } finally {
+      setLoading(false);
+    }
+  }, [params, showAlert]);
+
+  // Use useEffect to run loadSharedOutfit when the component mounts or params change
+  useEffect(() => {
+    loadSharedOutfit();
+  }, [loadSharedOutfit]);
 
   // Load user's items
   const loadItems = async () => {
@@ -147,6 +213,79 @@ export default function TryOnScreen() {
       ],
       { cancelable: true }
     );
+  };
+
+  const handleShare = async () => {
+    if (!generatedImage || !user) return;
+
+    let fileUri = '';
+
+    try {
+      setIsSharing(true);
+      
+      // 1. SAVE THE OUTFIT RECIPE TO PUBLIC TABLE
+      const sharedOutfitId = await createSharedOutfit(user.id, {
+        topId: selectedTop?.id,
+        bottomId: selectedBottom?.id,
+        shoeId: selectedShoe?.id,
+    });
+
+    // 2. GENERATE NEW DEEP LINK using the Shared Outfit ID
+    // New link format: outfitplanner://shared-outfit/SHARED_OUTFIT_ID
+    const deepLink = Linking.createURL(`shared-outfit/${sharedOutfitId}`);
+
+    // 3. PREPARE FILE SYSTEM (Same as before)
+    const fs = FileSystem as any;
+    const directory = fs.cacheDirectory || fs.documentDirectory;
+    // ... (File system checks and fileUri setup) ...
+    
+    const filename = `try-on-look-${Date.now()}.png`;
+    fileUri = `${directory}${filename}`;
+
+    const base64Data = generatedImage.includes(',') 
+      ? generatedImage.split(',')[1] 
+      : generatedImage;
+
+    await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    if (!(await Sharing.isAvailableAsync())) {
+      showAlert('Sharing is not available on this device', 'Error');
+      return;
+    }
+
+    // 4. SWITCH TO CORE RN SHARE API FOR TEXT/LINK
+    await Share.share({
+      title: 'Look at my outfit!',
+      message: `Look at my outfit! Check it out here: ${deepLink}`,
+      url: fileUri, // This attaches the saved file
+    });
+
+    } catch (error: any) {
+      console.error('Error sharing image:', error);
+      // If the native Share fails, fall back to the old Expo Sharing method just for the file
+      try {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'image/png',
+          dialogTitle: 'Look at my outfit!', 
+          UTI: 'public.png', 
+        });
+      } catch (e) {
+        showAlert(`Sharing failed: ${error.message || 'Unknown error occurred.'}`, 'Error');
+      }
+      
+    } finally {
+      setIsSharing(false);
+      // Clean up temp file safely
+      if (fileUri) {
+        try {
+          await FileSystem.deleteAsync(fileUri, { idempotent: true });
+        } catch (e) {
+          console.warn('Cleanup warning:', e);
+        }
+      }
+    }
   };
 
   const handleGenerateTryOn = async () => {
@@ -336,6 +475,23 @@ export default function TryOnScreen() {
                       <Text style={styles.buttonText}>Shuffle</Text>
                     </TouchableOpacity>
                   </View>
+
+                  {/* Share Button (Top Right) */}
+                  {generatedImage && (
+                    <View style={styles.topRightButtons}>
+                       <TouchableOpacity 
+                        style={styles.shareButton} 
+                        onPress={handleShare}
+                        disabled={isSharing}
+                      >
+                        {isSharing ? (
+                          <ActivityIndicator size="small" color="#000" />
+                        ) : (
+                          <MaterialIcons name="share" size={20} color="#000" />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  )}
 
                   {/* Bottom Action Buttons */}
                   <View style={styles.bottomButtons}>
@@ -530,6 +686,27 @@ const styles = StyleSheet.create({
   topButtons: {
     flexDirection: 'row',
     gap: 8,
+  },
+  topRightButtons: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+  },
+  shareButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   aiGenButton: {
     flexDirection: 'row',

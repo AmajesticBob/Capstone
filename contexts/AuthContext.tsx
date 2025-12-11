@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching profile:', error);
+        console.error('Error fetching profile FULL OBJECT:', JSON.stringify(error, null, 2));
         throw error;
       }
 
@@ -290,7 +290,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       return data === null; // Username is available if no data is returned
-    } catch (error) {
+    } catch (error: any) {
+      if(error.code === 'PGRST116') {
+        return true;
+      }
+      
       console.error('Error checking username:', error);
       return false;
     }

@@ -271,8 +271,11 @@ export async function generateVirtualTryOn(
       description: descriptionText || 'Virtual try-on image generated successfully!',
       imageData: generatedImageData,
     };
-  } catch (error) {
-    console.error('Error generating virtual try-on:', error);
-    throw new Error('Failed to generate virtual try-on. Please try again.');
+  } catch (error: any) {
+    // 1. Log the full detailed error object to the terminal
+    console.log("🚨 DEEP DEBUG LOG:", JSON.stringify(error, null, 2));
+    
+    // 2. Throw the ACTUAL error message to the phone screen
+    throw new Error(`Gemini API Error: ${error.message || JSON.stringify(error)}`);
   }
 }

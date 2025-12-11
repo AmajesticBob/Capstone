@@ -2,6 +2,7 @@
   "expo": {
     "name": "Outfit Planner",
     "slug": "outfit-planner",
+    "scheme": "outfitplanner",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -26,8 +27,8 @@
       "package": "com.outfitplanner.app"
     },
     "plugins": [
-      "expo-router"
-    ],
-    "scheme": "outfitplanner"
+      "expo-router",
+      "expo-secure-store"
+    ]
   }
 }
