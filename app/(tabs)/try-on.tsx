@@ -88,7 +88,7 @@ export default function TryOnScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: false,
         quality: 0.8,
       });
@@ -175,7 +175,7 @@ export default function TryOnScreen() {
         bottomImageUrl,
         shoeImageUrl
       );
-      // output from this one is long as hell
+      // The output of this one is too long
       // console.log('Try-on result:', tryOnResult);
       console.log('Has image data:', !!tryOnResult.imageData);
       console.log('Image data length:', tryOnResult.imageData?.length);
@@ -189,7 +189,6 @@ export default function TryOnScreen() {
       } else {
         console.warn('No image data in response');
       }
-      showAlert('Virtual try-on generated successfully!', 'Success');
     } catch (error) {
       console.error('Error generating try-on:', error);
       showAlert(
@@ -371,23 +370,6 @@ export default function TryOnScreen() {
                 </TouchableOpacity>
               )}
             </View>
-
-            {/* Result Description */}
-            {result && (
-              <View style={[styles.resultBox, { backgroundColor: themedColors.card }]}>
-                <View style={styles.resultHeader}>
-                  <MaterialCommunityIcons name="star-circle" size={20} color={colors.primary} />
-                  <Text style={[styles.resultTitle, { color: themedColors.text }]}>
-                    AI Visualization
-                  </Text>
-                </View>
-                <ScrollView style={styles.resultScroll} nestedScrollEnabled>
-                  <Text style={[styles.resultText, { color: themedColors.text }]}>
-                    {result}
-                  </Text>
-                </ScrollView>
-              </View>
-            )}
           </View>
 
           {/* Item Selection Area - Right Side */}
@@ -488,7 +470,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    marginBottom: 50
+    marginBottom: 50,
   },
   mainContent: {
     flexDirection: width > 768 ? 'row' : 'column',
@@ -535,7 +517,7 @@ const styles = StyleSheet.create({
   aiGenButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -544,7 +526,7 @@ const styles = StyleSheet.create({
   shuffleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -564,7 +546,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -676,4 +658,3 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
 });
-

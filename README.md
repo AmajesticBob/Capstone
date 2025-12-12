@@ -2,6 +2,28 @@
 
 A React Native mobile application for managing your wardrobe, planning outfits, and getting style inspiration with secure user authentication.
 
+## Main Feature Demos
+
+**User Signup**
+
+![gif](./assets/1-User-LogIn.gif)
+
+**Adding an Image of an Item**
+
+![gif](./assets/2-Add-Item.gif)
+
+**Color Recommedation**
+
+![gif](./assets/3-Color-Recommendation.gif)
+
+**Inspiration Outfit**
+
+![gif](./assets/4-Inspiration-Outfit.gif)
+
+**AI Generated Try-on**
+
+![gif](./assets/5-AI-TryOn.gif)
+
 ## Features
 
 - **User Authentication**: Secure sign-up and login with email verification
