@@ -247,8 +247,9 @@ export async function generateVirtualTryOn(
         console.log('Part keys:', Object.keys(part));
         console.log('Part:', JSON.stringify(part, null, 2));
         if (part.text) {
-          descriptionText += part.text;
-          console.log('Found text:', part.text);
+          descriptionText += part.text; 
+          // returned text is too long, prevents other logs from being visible
+          // console.log('Found text:', part.text);
         }
         if (part.inlineData) {
           generatedImageData = part.inlineData.data;

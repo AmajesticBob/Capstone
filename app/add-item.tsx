@@ -116,8 +116,7 @@ export default function AddItemScreen() {
       // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: false,
         quality: 0.8,
       });
 
@@ -142,8 +141,7 @@ export default function AddItemScreen() {
 
       // Launch camera
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: false,
         quality: 0.8,
       });
 
@@ -253,7 +251,7 @@ export default function AddItemScreen() {
                 onPress={showImageOptions}
               >
                 {imageUri ? (
-                  <Image source={{ uri: imageUri }} style={styles.photoPreview} />
+                  <Image source={{ uri: imageUri }} style={styles.photoPreview} resizeMode='contain'/>
                 ) : (
                   <>
                     <MaterialIcons name="add-a-photo" size={48} color={themedColors.textSecondary} />

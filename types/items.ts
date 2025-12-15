@@ -1,15 +1,15 @@
 export interface Item {
-  id: string;
+id: string;
   user_id: string;
   name: string;
   category: string;
   color?: string;
-  color_hex?: string;
+  primary_color?: string; // The hex
   brand?: string;
-  description?: string;
   image_url?: string;
   created_at: string;
   updated_at: string;
+  description?: string;
 }
 
 export interface CreateItemInput {
@@ -20,4 +20,5 @@ export interface CreateItemInput {
   brand?: string;
   description?: string;
   image_url?: string;
+  storage_path?: string;
 }
