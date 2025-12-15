@@ -35,6 +35,7 @@ export default function EditItemScreen() {
   const { user } = useAuth();
   const [itemName, setItemName] = useState('');
   const [color, setColor] = useState('');
+  const [colorHex, setColorHex] = useState('');
   const [brand, setBrand] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
@@ -68,6 +69,7 @@ export default function EditItemScreen() {
         setItemName(item.name);
         setCategory(item.category);
         setColor(item.color || '');
+        setColorHex(item.color_hex || '');
         setBrand(item.brand || '');
         setDescription(item.description || '');
         setExistingImageUrl(item.image_url || null);
@@ -125,6 +127,7 @@ export default function EditItemScreen() {
         name: itemName.trim(),
         category,
         color: color.trim() || undefined,
+        color_hex: colorHex.trim() || undefined,
         brand: brand.trim() || undefined,
         description: description.trim() || undefined,
         image_url: imageUrl,
@@ -187,9 +190,8 @@ export default function EditItemScreen() {
 
       // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
+        mediaTypes: ['images'],
+        allowsEditing: false,
         quality: 0.8,
       });
 
@@ -214,8 +216,7 @@ export default function EditItemScreen() {
 
       // Launch camera
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: false,
         quality: 0.8,
       });
 
@@ -269,6 +270,7 @@ export default function EditItemScreen() {
       setItemName('');
       setCategory('');
       setColor('');
+      setColorHex('');
       setDescription('');
       
       // Use the current image (new upload or existing)
@@ -280,10 +282,11 @@ export default function EditItemScreen() {
       // Generate classification using AI with image
       const classification = await generateItemClassification(imageToUse);
       
-      // Fill the form fields with generated data
+      // Fill the form fields with generated data (including hidden colorHex)
       setItemName(classification.name);
       setCategory(classification.category);
       setColor(classification.color);
+      setColorHex(classification.colorHex);
       setDescription(classification.description);
       
       showAlert('Item details generated successfully!', 'Success');
@@ -344,7 +347,7 @@ export default function EditItemScreen() {
                 onPress={showImageOptions}
               >
                 {displayImageUri ? (
-                  <Image source={{ uri: displayImageUri }} style={styles.photoPreview} />
+                  <Image source={{ uri: displayImageUri }} style={styles.photoPreview} resizeMode='contain'/>
                 ) : (
                   <>
                     <MaterialIcons name="add-a-photo" size={48} color={themedColors.textSecondary} />

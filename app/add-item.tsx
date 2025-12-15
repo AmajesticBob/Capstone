@@ -34,6 +34,7 @@ export default function AddItemScreen() {
   const { user } = useAuth();
   const [itemName, setItemName] = useState('');
   const [color, setColor] = useState('');
+  const [colorHex, setColorHex] = useState('');
   const [brand, setBrand] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
@@ -82,6 +83,7 @@ export default function AddItemScreen() {
         name: itemName.trim(),
         category,
         color: color.trim() || undefined,
+        color_hex: colorHex.trim() || undefined,
         brand: brand.trim() || undefined,
         description: description.trim() || undefined,
         image_url: imageUrl,
@@ -113,9 +115,8 @@ export default function AddItemScreen() {
 
       // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
+        mediaTypes: ['images'],
+        allowsEditing: false,
         quality: 0.8,
       });
 
@@ -140,8 +141,7 @@ export default function AddItemScreen() {
 
       // Launch camera
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: false,
         quality: 0.8,
       });
 
@@ -195,15 +195,17 @@ export default function AddItemScreen() {
       setItemName('');
       setCategory('');
       setColor('');
+      setColorHex('');
       setDescription('');
       
       // Generate classification using AI with image
       const classification = await generateItemClassification(imageUri);
       
-      // Fill the form fields with generated data
+      // Fill the form fields with generated data (including hidden colorHex)
       setItemName(classification.name);
       setCategory(classification.category);
       setColor(classification.color);
+      setColorHex(classification.colorHex);
       setDescription(classification.description);
       
       showAlert('Item details generated successfully!', 'Success');
@@ -249,7 +251,7 @@ export default function AddItemScreen() {
                 onPress={showImageOptions}
               >
                 {imageUri ? (
-                  <Image source={{ uri: imageUri }} style={styles.photoPreview} />
+                  <Image source={{ uri: imageUri }} style={styles.photoPreview} resizeMode='contain'/>
                 ) : (
                   <>
                     <MaterialIcons name="add-a-photo" size={48} color={themedColors.textSecondary} />
