@@ -34,6 +34,7 @@ export default function AddItemScreen() {
   const { user } = useAuth();
   const [itemName, setItemName] = useState('');
   const [color, setColor] = useState('');
+  const [colorHex, setColorHex] = useState('');
   const [brand, setBrand] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
@@ -82,6 +83,7 @@ export default function AddItemScreen() {
         name: itemName.trim(),
         category,
         color: color.trim() || undefined,
+        color_hex: colorHex.trim() || undefined,
         brand: brand.trim() || undefined,
         description: description.trim() || undefined,
         image_url: imageUrl,
@@ -193,15 +195,17 @@ export default function AddItemScreen() {
       setItemName('');
       setCategory('');
       setColor('');
+      setColorHex('');
       setDescription('');
       
       // Generate classification using AI with image
       const classification = await generateItemClassification(imageUri);
       
-      // Fill the form fields with generated data
+      // Fill the form fields with generated data (including hidden colorHex)
       setItemName(classification.name);
       setCategory(classification.category);
       setColor(classification.color);
+      setColorHex(classification.colorHex);
       setDescription(classification.description);
       
       showAlert('Item details generated successfully!', 'Success');
