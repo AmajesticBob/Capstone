@@ -1,3 +1,4 @@
+import 'react-native-url-polyfill/auto';
 import { supabase } from './supabase';
 import { Item, CreateItemInput } from '../types/items';
 
@@ -72,6 +73,89 @@ export async function getSignedImageUrl(
     return null;
   }
 }
+
+/**
+ * Uploads a local file URI to a designated PUBLIC folder in Supabase Storage 
+ * and returns the permanent Public URL. It also records the file's path 
+ * and expiration time in the shared_files table for later cleanup.
+ * * @param localFileUri The local temporary URI of the image created in try-on.tsx.
+ * @param bucketName The name of the Supabase bucket (e.g., 'item-images').
+ * @param folderName The public sub-folder name (e.g., 'shared_looks').
+ * @param expiresInHours The time (in hours) after which the file should be deleted (for tracking).
+ * @returns The permanent public URL of the uploaded image.
+ */
+/*export async function uploadLocalFileToPublicStorage(
+  localFileUri: string,
+  bucketName: string,
+  folderName: string = 'shared_looks',
+  expiresInHours: number = 24
+): Promise<string> {
+  const userId = supabase.auth.currentUser?.id;
+  if (!userId) {
+    throw new Error("User must be authenticated to upload shared files.");
+  }
+  
+  try {
+    // 1. Fetch the local URI to get a Blob (this works reliably in React Native for local files)
+    const response = await fetch(localFileUri);
+    const blob = await response.blob();
+    
+    // 2. Define the storage path
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.png`;
+    // NOTE: Storage policy dictates the first path segment must be 'shared_looks' for public read
+    const storagePath = `${folderName}/${fileName}`; 
+    
+    console.log(`Uploading shared image to: ${bucketName}/${storagePath}`);
+
+    // 3. Upload the blob to Supabase
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(storagePath, blob, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: 'image/png',
+      });
+
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError);
+      throw new Error('Failed to upload image to shared storage.');
+    }
+
+    // 4. Get the permanent public URL
+    const { data: publicUrlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(storagePath);
+    
+    if (!publicUrlData) {
+      throw new Error('Failed to retrieve public URL after upload.');
+    }
+    
+    // 5. Record the file path and expiration in the database (for scheduled deletion, if enabled later)
+    const expirationDate = new Date();
+    expirationDate.setHours(expirationDate.getHours() + expiresInHours);
+
+    // NOTE: The 'shared_files' table insertion logic is here for future TTL reference.
+    // If you haven't run the SQL for this table, this part will throw a warning/error, 
+    // but the URL sharing should still work as we handle the error below.
+    const { error: dbError } = await supabase
+      .from('shared_files')
+      .insert({
+        file_path: storagePath,
+        user_id: userId,
+        expires_at: expirationDate.toISOString(),
+      });
+
+    if (dbError) {
+      console.warn('Warning: Could not log file for deletion (shared_files table missing/error):', dbError);
+    }
+
+    return publicUrlData.publicUrl;
+  } catch (error) {
+    console.error('Error in uploadLocalFileToPublicStorage:', error);
+    // Add context to the error message for better debugging
+    throw new Error(`Upload failed: ${error.message || 'Unknown network/file error.'}`);
+  }
+}*/
 
 /**
  * Create a new item in the database
@@ -224,106 +308,75 @@ export async function updateItem(
   }
 }
 
+export const getItemById = async (id: string): Promise<Item | null> => {
+  const { data, error } = await supabase
+    .from('items') // or whatever your table name is
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching item by ID:', error);
+    return null;
+  }
+  return data as Item;
+};
+
 /**
- * Search for items similar to a query image or text
- * @param query - An object with either `queryText` or `queryImagePath`
- * @returns - Array of similar items
+ * Saves a shared outfit recipe to the public shared_outfits table.
+ * @param sharerId - The user's ID creating the shared link
+ * @param itemIds - Object containing the top, bottom, and shoe IDs
+ * @returns The unique ID of the newly shared outfit
  */
-export async function searchSimilarItems(
-  userId: string,
-  query: {
-    queryText?: string;
-    queryImagePath?: string;
-  },
-  categoryFilter?: string
-): Promise<Item[]> {
+export async function createSharedOutfit(
+  sharerId: string,
+  itemIds: { topId?: string | null; bottomId?: string | null; shoeId?: string | null }
+): Promise<string> {
   try {
-    let queryImageUrl: string | undefined = undefined;
-
-    if (query.queryImagePath) {
-      const bucket = query.queryImagePath.includes('-temp') ? 'temp-images' : 'item-images';
-      const signedUrl = await getSignedImageUrl(query.queryImagePath, bucket);
-      if (!signedUrl) {
-        throw new Error('Could not get signed URL for query image');
-      }
-      queryImageUrl = signedUrl;
-    }
-
-    const response = await fetch(`${PYTHON_API_URL}/search_similar`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        user_id: userId,
-        query_image_url: queryImageUrl,
-        query_text: query.queryText,
-        limit: 10,
-        category: categoryFilter,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Search API Error:', response.status, errorText);
-      throw new Error(`Search failed: ${response.status}`);
-    }
-    const results = await response.json();
-
-    const signedResults = await Promise.all(
-      results.map(async (item:any) => {
-        // Handle conversion from storage path to signed URL
-        if(item.image_url && !item.image_url.startsWith('http')) {
-          const signedURL = await getSignedImageUrl(item.image_url);
-          return {...item, image_url: signedURL || item.image_url };
-        }
-        return item;
+    const { data, error } = await supabase
+      .from('shared_outfits')
+      .insert({
+        sharer_id: sharerId,
+        top_id: itemIds.topId || null,
+        bottom_id: itemIds.bottomId || null,
+        shoe_id: itemIds.shoeId || null,
       })
-    );
-    return signedResults as Item[];
+      .select('id')
+      .single();
 
+    if (error) {
+      console.error('Error creating shared outfit:', error);
+      throw error;
+    }
+
+    return data.id as string;
   } catch (error) {
-    console.error('Error in searchSimilarItems:', error);
+    console.error('Error in createSharedOutfit:', error);
     throw error;
   }
 }
 
-// The below functions are specifically part of the inspiraation matching feature
-
 /**
- * Upload a temporary image for inspiration
- * @param userId 
- * @param uri 
+ * Fetches the recipe for a single shared outfit by its unique ID.
+ * @param outfitId - The unique ID of the shared outfit
+ * @returns The shared outfit recipe object or null if not found.
  */
-export async function uploadTempImage(userId: string, uri: string): Promise<string> {
-    try {
-      const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${Date.now()}-temp.${fileExt}`;
-      const filePath = `${userId}/${fileName}`;
-  
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const arrayBuffer = await new Response(blob).arrayBuffer();
-  
-      const { data, error } = await supabase.storage
-        .from('temp-images')
-        .upload(filePath, arrayBuffer, {
-          contentType: `image/${fileExt}`,
-          upsert: false,
-        });
-  
-      if (error) throw error;
-      return data.path;
-    } catch (error) {
-      console.error('Error in uploadTempImage:', error);
-      throw error;
-    }
-  }
+export async function getSharedOutfitById(outfitId: string): Promise<any | null> {
+  try {
+    const { data, error } = await supabase
+      .from('shared_outfits')
+      .select('top_id, bottom_id, shoe_id, sharer_id')
+      .eq('id', outfitId)
+      .single();
 
-  /**
-  * Delete a file from storage, so that we don't hold the image forever
-  */
-  export async function deleteFromStorage(bucket: string, path: string) {
-    const { error } = await supabase.storage.from(bucket).remove([path]);
-    if (error) console.error('Error cleaning up temp file:', error);
+    if (error && error.code !== 'PGRST116') { // Ignore '0 rows' error
+      console.error('Error fetching shared outfit recipe:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in getSharedOutfitById:', error);
+    return null;
   }
+}
